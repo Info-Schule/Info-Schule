@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MoodMap mit Level-System</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+  body { margin:0; font-family: Arial, sans-serif; }
+  #menu { height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; background:#f0f0f0; }
+  #menu input { padding:8px; margin:5px; width:200px; }
+  #menu button { padding:10px 20px; margin-top:10px; cursor:pointer; }
+  #mapContainer { display:none; height:100vh; flex-direction:column; }
+  #moodInput { padding: 10px; background: #f0f0f0; display:flex; gap:10px; align-items:center; }
+  #level { padding:5px 10px; background:#ddd; margin-left:auto; border-radius:5px; }
+</style>
+</head>
+<body>
+
+<!-- ===== Menü ===== -->
+<div id="menu">
+  <h1>MoodMap</h1>
+  <input type="text" id="username" placeholder="Dein Name">
+  <button onclick="startApp()">Start</button>
+</div>
+
+<!-- ===== Map Bereich ===== -->
+<div id="mapContainer">
+  <div id="moodInput">
+    <label for="mood">Wie fühlst du dich?</label>
+    <select id="mood">
+      <option value="happy">😄 Glücklich</option>
+      <option value="sad">😢 Traurig</option>
+      <option value="angry">😡 Wütend</option>
+      <option value="neutral">😐 Neutral</option>
+    </select>
+    <button onclick="submitMood()">Posten</button>
+    <div id="level">Level: 1</div>
+  </div>
+  <div id="map"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+  // ===== Firebase Config =====
+  const firebaseConfig = {
+    apiKey: "DEINE_APIKEY",
+    authDomain: "DEIN-PROJEKT.firebaseapp.com",
+    projectId: "DEIN-PROJEKT",
+    storageBucket: "DEIN-PROJEKT.appspot.com",
+    messagingSenderId: "1234567890",
+    appId: "1:1234567890:web:abcdef"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  let username = "";
+  let userLevel = 1;
+  let userPoints = 0;
+
+  // ===== Karte initialisieren =====
+  const map = L.map('map').setView([51.1657, 10.4515], 6);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+
+  const moodIcons = {
+    happy: L.icon({ iconUrl: 'https://twemoji.maxcdn.com/2/72x72/1f604.png', iconSize: [30,30] }),
+    sad: L.icon({ iconUrl: 'https://twemoji.maxcdn.com/2/72x72/1f622.png', iconSize: [30,30] }),
+    angry: L.icon({ iconUrl: 'https://twemoji.maxcdn.com/2/72x72/1f621.png', iconSize: [30,30] }),
+    neutral: L.icon({ iconUrl: 'https://twemoji.maxcdn.com/2/72x72/1f610.png', iconSize: [30,30] })
+  };
+
+  // ===== Start App =====
+  function startApp() {
+    const input = document.getElementById('username').value.trim();
+    if(input === "") { alert("Bitte gib einen Namen ein."); return; }
+    username = input;
+    document.getElementById('menu').style.display = "none";
+    document.getElementById('mapContainer').style.display = "flex";
+    loadMoods();
+    updateLevelDisplay();
+  }
+
+  // ===== Mood posten + Level up =====
+  function submitMood() {
+    const mood = document.getElementById('mood').value;
+
+    if (!navigator.geolocation) {
+      alert("Geolocation wird nicht unterstützt.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(async (position) => {
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+
+      try {
+        await db.collection('moods').add({
+          username,
+          mood,
+          lat,
+          lon,
+          timestamp: Date.now()
+        });
+
+        // Punkte + Level
+        userPoints += 10; // pro Post 10 Punkte
+        if(userPoints >= userLevel * 50) { userLevel++; userPoints=0; alert("Level Up! Du bist jetzt Level " + userLevel); }
+        updateLevelDisplay();
+
+        loadMoods();
+      } catch(err) { alert("Fehler: " + err); }
+
+    }, (err) => { alert("Standort konnte nicht ermittelt werden: " + err.message); });
+  }
+
+  function updateLevelDisplay() {
+    document.getElementById('level').innerText = "Level: " + userLevel;
+  }
+
+  // ===== Alle Moods laden =====
+  async function loadMoods() {
+    const snapshot = await db.collection('moods').get();
+    map.eachLayer((layer) => { if (layer.options && layer.options.icon) map.removeLayer(layer); });
+
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      L.marker([data.lat, data.lon], { icon: moodIcons[data.mood] })
+        .addTo(map)
+        .bindPopup(`${data.username} fühlt sich ${data.mood}`);
+    });
+  }
+</script>
+
+</body>
+</html>
