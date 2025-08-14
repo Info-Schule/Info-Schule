@@ -1,137 +1,132 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MoodMap mit Level-System</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<style>
-  body { margin:0; font-family: Arial, sans-serif; }
-  #menu { height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; background:#f0f0f0; }
-  #menu input { padding:8px; margin:5px; width:200px; }
-  #menu button { padding:10px 20px; margin-top:10px; cursor:pointer; }
-  #mapContainer { display:none; height:100vh; flex-direction:column; }
-  #moodInput { padding: 10px; background: #f0f0f0; display:flex; gap:10px; align-items:center; }
-  #level { padding:5px 10px; background:#ddd; margin-left:auto; border-radius:5px; }
-</style>
+  <meta charset="UTF-8">
+  <title>MoodMap GeoGame</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <style>
+    body { margin:0; font-family: Arial, sans-serif; }
+    #map { height: 70vh; }
+    #menu { padding: 10px; background: #f0f0f0; display:flex; gap:10px; align-items:center; }
+    #menu button { padding:5px 10px; cursor:pointer; }
+    #loginForm { display:none; margin:10px; }
+    input { margin:5px; padding:5px; }
+  </style>
 </head>
 <body>
 
-<!-- ===== Menü ===== -->
 <div id="menu">
-  <h1>MoodMap</h1>
-  <input type="text" id="username" placeholder="Dein Name">
-  <button onclick="startApp()">Start</button>
+  <button id="loginBtn">Login / Register</button>
+  <select id="colorSelect">
+    <option value="red">Rot</option>
+    <option value="blue">Blau</option>
+    <option value="green">Grün</option>
+    <option value="orange">Orange</option>
+  </select>
+  <span id="userInfo"></span>
+  <button id="logoutBtn" style="display:none;">Logout</button>
 </div>
 
-<!-- ===== Map Bereich ===== -->
-<div id="mapContainer">
-  <div id="moodInput">
-    <label for="mood">Wie fühlst du dich?</label>
-    <select id="mood">
-      <option value="happy">😄 Glücklich</option>
-      <option value="sad">😢 Traurig</option>
-      <option value="angry">😡 Wütend</option>
-      <option value="neutral">😐 Neutral</option>
-    </select>
-    <button onclick="submitMood()">Posten</button>
-    <div id="level">Level: 1</div>
-  </div>
-  <div id="map"></div>
+<div id="loginForm">
+  <input type="email" id="email" placeholder="Email">
+  <input type="password" id="password" placeholder="Passwort">
+  <button id="registerBtn">Register</button>
+  <button id="loginSubmitBtn">Login</button>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
-  // ===== Firebase Config =====
+  // ================= Firebase Config =================
   const firebaseConfig = {
-    apiKey: "DEINE_APIKEY",
-    authDomain: "DEIN-PROJEKT.firebaseapp.com",
-    projectId: "DEIN-PROJEKT",
-    storageBucket: "DEIN-PROJEKT.appspot.com",
-    messagingSenderId: "1234567890",
-    appId: "1:1234567890:web:abcdef"
+    apiKey: "DEIN_API_KEY",
+    authDomain: "DEIN_PROJECT_ID.firebaseapp.com",
+    projectId: "DEIN_PROJECT_ID",
+    storageBucket: "DEIN_PROJECT_ID.appspot.com",
+    messagingSenderId: "DEINE_SENDER_ID",
+    appId: "DEIN_APP_ID"
   };
   firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
   const db = firebase.firestore();
 
-  let username = "";
-  let userLevel = 1;
-  let userPoints = 0;
+  // ================= Login / Register =================
+  const loginBtn = document.getElementById('loginBtn');
+  const loginForm = document.getElementById('loginForm');
+  const registerBtn = document.getElementById('registerBtn');
+  const loginSubmitBtn = document.getElementById('loginSubmitBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const userInfo = document.getElementById('userInfo');
 
-  // ===== Karte initialisieren =====
-  const map = L.map('map').setView([51.1657, 10.4515], 6);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+  loginBtn.onclick = () => loginForm.style.display = loginForm.style.display === 'none' ? 'block' : 'none';
 
-  const moodIcons = {
-    happy: L.icon({ iconUrl: 'https://twemoji.maxcdn.com/2/72x72/1f604.png', iconSize: [30,30] }),
-    sad: L.icon({ iconUrl: 'https://twemoji.maxcdn.com/2/72x72/1f622.png', iconSize: [30,30] }),
-    angry: L.icon({ iconUrl: 'https://twemoji.maxcdn.com/2/72x72/1f621.png', iconSize: [30,30] }),
-    neutral: L.icon({ iconUrl: 'https://twemoji.maxcdn.com/2/72x72/1f610.png', iconSize: [30,30] })
+  registerBtn.onclick = async () => {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    try {
+      await auth.createUserWithEmailAndPassword(email, password);
+      alert('User registered!');
+    } catch(e) { alert(e.message); }
   };
 
-  // ===== Start App =====
-  function startApp() {
-    const input = document.getElementById('username').value.trim();
-    if(input === "") { alert("Bitte gib einen Namen ein."); return; }
-    username = input;
-    document.getElementById('menu').style.display = "none";
-    document.getElementById('mapContainer').style.display = "flex";
-    loadMoods();
-    updateLevelDisplay();
-  }
+  loginSubmitBtn.onclick = async () => {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    try {
+      await auth.signInWithEmailAndPassword(email, password);
+      loginForm.style.display = 'none';
+    } catch(e) { alert(e.message); }
+  };
 
-  // ===== Mood posten + Level up =====
-  function submitMood() {
-    const mood = document.getElementById('mood').value;
+  logoutBtn.onclick = () => auth.signOut();
 
-    if (!navigator.geolocation) {
-      alert("Geolocation wird nicht unterstützt.");
-      return;
+  auth.onAuthStateChanged(user => {
+    if(user){
+      userInfo.innerText = 'Angemeldet als: ' + user.email;
+      loginBtn.style.display = 'none';
+      logoutBtn.style.display = 'inline-block';
+    } else {
+      userInfo.innerText = '';
+      loginBtn.style.display = 'inline-block';
+      logoutBtn.style.display = 'none';
     }
+  });
 
-    navigator.geolocation.getCurrentPosition(async (position) => {
-      const lat = position.coords.latitude;
-      const lon = position.coords.longitude;
+  // ================= Leaflet Map =================
+  const map = L.map('map').setView([51.1657, 10.4515], 6); // Mitte Deutschland
 
-      try {
-        await db.collection('moods').add({
-          username,
-          mood,
-          lat,
-          lon,
-          timestamp: Date.now()
-        });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19
+  }).addTo(map);
 
-        // Punkte + Level
-        userPoints += 10; // pro Post 10 Punkte
-        if(userPoints >= userLevel * 50) { userLevel++; userPoints=0; alert("Level Up! Du bist jetzt Level " + userLevel); }
-        updateLevelDisplay();
-
-        loadMoods();
-      } catch(err) { alert("Fehler: " + err); }
-
-    }, (err) => { alert("Standort konnte nicht ermittelt werden: " + err.message); });
+  // Standort abfragen
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(pos => {
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+      const marker = L.marker([lat, lon], {color: 'blue'}).addTo(map);
+      map.setView([lat, lon], 13);
+    }, err => alert('Standort konnte nicht ermittelt werden.'));
+  } else {
+    alert('Geolocation wird von deinem Gerät nicht unterstützt.');
   }
 
-  function updateLevelDisplay() {
-    document.getElementById('level').innerText = "Level: " + userLevel;
-  }
+  // ================= Farben =================
+  const colorSelect = document.getElementById('colorSelect');
+  colorSelect.onchange = () => {
+    alert('Farbe gewählt: ' + colorSelect.value);
+  };
 
-  // ===== Alle Moods laden =====
-  async function loadMoods() {
-    const snapshot = await db.collection('moods').get();
-    map.eachLayer((layer) => { if (layer.options && layer.options.icon) map.removeLayer(layer); });
+  // ================= LocalStorage Backup =================
+  if(localStorage.getItem('level') === null) localStorage.setItem('level', '1');
+  if(localStorage.getItem('points') === null) localStorage.setItem('points', '0');
 
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      L.marker([data.lat, data.lon], { icon: moodIcons[data.mood] })
-        .addTo(map)
-        .bindPopup(`${data.username} fühlt sich ${data.mood}`);
-    });
-  }
+  console.log('Level:', localStorage.getItem('level'), 'Points:', localStorage.getItem('points'));
 </script>
 
 </body>
