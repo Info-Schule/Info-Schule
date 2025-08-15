@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GGLernen</title>
 <style>
-/* ======= Body ======= */
 body {
   margin:0;
   font-family:'Arial', sans-serif;
@@ -14,170 +13,182 @@ body {
   justify-content:center;
   align-items:center;
   flex-direction:column;
-  height:100vh;
-  overflow:hidden;
+  min-height:100vh;
 }
-
-/* ======= Screens ======= */
 .screen { display:none; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100vh; transition:opacity 0.5s; }
 .active { display:flex; opacity:1; }
-
-/* ======= Headings ======= */
-h1,h2,h3 { color:#fff; text-align:center; margin:10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
-
-/* ======= Input ======= */
-input { padding:10px; font-size:16px; border-radius:8px; border:none; margin:10px 0; width:220px; text-align:center; }
-
-/* ======= Buttons ======= */
+h1,h2,h3 { color:#fff; text-align:center; margin:10px; text-shadow:2px 2px 4px rgba(0,0,0,0.3); }
 button { padding:10px 25px; margin:10px; border:none; border-radius:12px; cursor:pointer; transition: transform 0.2s, background 0.3s; font-weight:bold; color:white; font-size:16px; }
 button:hover { transform:scale(1.05); filter:brightness(1.2); }
-
-/* ======= Button Colors ======= */
 #menuScreen button { background:#6c5ce7; }
-#subjectScreen button { background:#00b894; }
-#exerciseScreen button { background:#fd79a8; }
-
-/* ======= Progress Bar ======= */
+#classScreen button { background:#00b894; }
+#subjectScreen button { background:#fd79a8; }
+#topicScreen button { background:#e17055; }
+#taskScreen button { background:#00cec9; }
 #progressBar { width:80%; height:25px; background:rgba(255,255,255,0.3); border-radius:12px; margin:20px 0; overflow:hidden; }
 #progressFill { height:100%; width:0%; background:#ffeaa7; border-radius:12px; transition: width 0.5s ease; }
-
-/* ======= Exercise Container ======= */
-#exerciseContainer { text-align:center; margin:20px; color:white; }
-
-/* ======= Logo ======= */
-#logo {
-  font-size:50px;
-  font-weight:bold;
-  color:white;
-  text-shadow: 3px 3px 8px rgba(0,0,0,0.4);
-  margin-bottom:30px;
-  animation: bounce 2s infinite;
-}
-
-@keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-15px); }
-}
-
-/* ======= Credits ======= */
-#credits { position:fixed; bottom:10px; font-size:14px; color:white; text-shadow:1px 1px 2px rgba(0,0,0,0.4); }
+#logo { font-size:48px; font-weight:bold; color:#fff; text-shadow:2px 2px 6px rgba(0,0,0,0.4); margin:20px; }
+#credits { font-size:14px; color:#fff; margin-top:10px; text-shadow:1px 1px 2px rgba(0,0,0,0.4);}
+select { padding:10px; font-size:16px; border-radius:8px; border:none; margin:10px 0; text-align:center; }
 </style>
 </head>
 <body>
 
-<!-- Logo -->
 <div id="logo">GGLernen</div>
+<div id="credits">von Peter Beulker</div>
 
-<!-- Start Screen -->
-<div id="startScreen" class="screen active">
-<h1>Willkommen zu GGLernen!</h1>
-<input type="text" id="userName" placeholder="Dein Name">
-<button onclick="startApp()">Start</button>
+<!-- Start Menu -->
+<div id="menuScreen" class="screen active">
+  <h1>Willkommen bei GGLernen!</h1>
+  <button onclick="showScreen('classScreen')">Start</button>
+</div>
+
+<!-- Class Selection -->
+<div id="classScreen" class="screen">
+  <h2>Wähle deine Klasse</h2>
+  <div id="classButtons"></div>
+  <button onclick="showScreen('menuScreen')">Zurück</button>
 </div>
 
 <!-- Subject Selection -->
 <div id="subjectScreen" class="screen">
-<h2>Hallo <span id="displayName"></span>! Wähle ein Fach:</h2>
-<button onclick="selectSubject('französisch')">Französisch</button>
-<button onclick="selectSubject('mathe')">Mathe</button>
-<button onclick="selectSubject('deutsch')">Deutsch</button>
+  <h2>Wähle dein Fach</h2>
+  <div id="subjectButtons"></div>
+  <button onclick="showScreen('classScreen')">Zurück</button>
 </div>
 
-<!-- Exercise Screen -->
-<div id="exerciseScreen" class="screen">
-<h2 id="subjectTitle"></h2>
-<div id="exerciseContainer"></div>
-<button onclick="nextExercise()">Nächste Aufgabe</button>
-<div id="progressBar"><div id="progressFill"></div></div>
-<button onclick="goToSubjects()">Zurück zu Fächern</button>
+<!-- Topic Selection -->
+<div id="topicScreen" class="screen">
+  <h2>Wähle ein Themengebiet</h2>
+  <div id="topicButtons"></div>
+  <button onclick="showScreen('subjectScreen')">Zurück</button>
 </div>
 
-<!-- Credits -->
-<div id="credits">Made by Peter Beulker</div>
+<!-- Task Screen -->
+<div id="taskScreen" class="screen">
+  <h2 id="taskTitle">Aufgaben</h2>
+  <div id="taskArea"></div>
+  <div id="progressBar"><div id="progressFill"></div></div>
+  <button onclick="nextTask()">Nächste Aufgabe</button>
+  <button onclick="showScreen('topicScreen')">Zurück</button>
+</div>
+
+<!-- Französisch Extra Menu -->
+<div id="frenchExtraScreen" class="screen">
+  <h2>Französisch Tools</h2>
+  <button onclick="showVocab()">Vokabeltrainer</button>
+  <button onclick="showFlashcards()">Lernkarten</button>
+  <button onclick="showScreen('subjectScreen')">Zurück</button>
+</div>
 
 <script>
-// ======== Variablen ========
-let userName = '';
-let subject = '';
-let level = 0;
-let exercises = [];
-let progress = 0;
+// Daten vorbereiten
+const classes = Array.from({length:9},(_,i)=>i+5); // 5-13
+const subjects = ['Französisch','Mathe','Deutsch'];
+const topics = ['Thema 1','Thema 2','Thema 3','Thema 4','Thema 5','Thema 6','Thema 7'];
+const maxTasks = 10; // max Aufgaben pro Thema
+let currentClass, currentSubject, currentTopicIndex, currentTaskIndex;
 
-// Beispiel-Übungen pro Fach
-const exerciseData = {
-  französisch:[
-    {question:"Übersetze: Haus", answer:"maison"},
-    {question:"Übersetze: Apfel", answer:"pomme"},
-    {question:"Übersetze: Freund", answer:"ami"}
-  ],
-  mathe:[
-    {question:"5 + 3 = ?", answer:"8"},
-    {question:"10 - 4 = ?", answer:"6"},
-    {question:"7 * 2 = ?", answer:"14"}
-  ],
-  deutsch:[
-    {question:"Synonym für schnell", answer:"rasch"},
-    {question:"Gegenteil von laut", answer:"leise"},
-    {question:"Plural von Kind", answer:"kinder"}
-  ]
-};
+// Generiere Dummy Aufgaben (kannst du ersetzen)
+const tasks = {};
+classes.forEach(cls=>{
+  tasks[cls]={};
+  subjects.forEach(sub=>{
+    tasks[cls][sub]={};
+    topics.forEach(tp=>{
+      tasks[cls][sub][tp]=Array.from({length:maxTasks},(_,i)=>`Aufgabe ${i+1} zu ${tp} in ${sub} Klasse ${cls}`);
+    });
+  });
+});
 
-// ======== Funktionen ========
-function showScreen(id){
+// Screen wechseln
+function showScreen(screenId){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
+  document.getElementById(screenId).classList.add('active');
+  if(screenId==='classScreen') loadClasses();
+  if(screenId==='subjectScreen') loadSubjects();
+  if(screenId==='topicScreen') loadTopics();
+  if(screenId==='taskScreen') loadTask();
+  if(screenId==='frenchExtraScreen') loadFrenchExtra();
 }
 
-function startApp(){
-  const nameInput = document.getElementById('userName').value.trim();
-  if(nameInput===''){ alert("Bitte Namen eingeben!"); return; }
-  userName = nameInput;
-  document.getElementById('displayName').textContent = userName;
-  localStorage.setItem('gglernenName', userName);
-  showScreen('subjectScreen');
+// Klassen Buttons
+function loadClasses(){
+  const container=document.getElementById('classButtons');
+  container.innerHTML='';
+  classes.forEach(c=>{
+    const btn=document.createElement('button');
+    btn.textContent=`Klasse ${c}`;
+    btn.onclick=()=>{currentClass=c; showScreen('subjectScreen');};
+    container.appendChild(btn);
+  });
 }
 
-function selectSubject(sub){
-  subject = sub;
-  level = parseInt(localStorage.getItem(subject+'Level')) || 0;
-  exercises = exerciseData[subject];
-  showScreen('exerciseScreen');
-  document.getElementById('subjectTitle').textContent = subject.charAt(0).toUpperCase()+subject.slice(1);
-  progress = (level/exercises.length)*100;
-  updateProgress();
-  showExercise();
+// Fächer Buttons
+function loadSubjects(){
+  const container=document.getElementById('subjectButtons');
+  container.innerHTML='';
+  subjects.forEach(s=>{
+    const btn=document.createElement('button');
+    btn.textContent=s;
+    btn.onclick=()=>{
+      currentSubject=s;
+      if(s==='Französisch'){ showScreen('frenchExtraScreen'); } else { showScreen('topicScreen'); }
+    };
+    container.appendChild(btn);
+  });
 }
 
-function showExercise(){
-  if(level >= exercises.length){
-    document.getElementById('exerciseContainer').innerHTML = "<h3>🎉 Alle Übungen abgeschlossen! 🎉</h3>";
-    return;
+// Themen Buttons
+function loadTopics(){
+  const container=document.getElementById('topicButtons');
+  container.innerHTML='';
+  topics.forEach((t,i)=>{
+    const btn=document.createElement('button');
+    btn.textContent=t;
+    btn.onclick=()=>{
+      currentTopicIndex=i;
+      currentTaskIndex=0;
+      showScreen('taskScreen');
+    };
+    container.appendChild(btn);
+  });
+}
+
+// Aufgaben Laden
+function loadTask(){
+  const taskArea=document.getElementById('taskArea');
+  taskArea.innerHTML='';
+  const tpName=topics[currentTopicIndex];
+  const taskList=tasks[currentClass][currentSubject][tpName];
+  if(currentTaskIndex<taskList.length){
+    taskArea.textContent=taskList[currentTaskIndex];
   }
-  const ex = exercises[level];
-  document.getElementById('exerciseContainer').innerHTML = `
-  <h3>${ex.question}</h3>
-  <input type="text" id="answerInput" placeholder="Antwort">
-  <button onclick="checkAnswer()">Antwort prüfen</button>`;
+  // Progress
+  const progress=(currentTaskIndex+1)/taskList.length*100;
+  document.getElementById('progressFill').style.width=`${progress}%`;
 }
 
-function checkAnswer(){
-  const answer = document.getElementById('answerInput').value.trim().toLowerCase();
-  const correct = exercises[level].answer.toLowerCase();
-  if(answer===correct){
-    alert("✅ Richtig!");
-    level++;
-    localStorage.setItem(subject+'Level', level);
-    progress = (level/exercises.length)*100;
-    updateProgress();
-    showExercise();
-  } else{
-    alert("❌ Falsch, versuche es erneut!");
+// Nächste Aufgabe
+function nextTask(){
+  const tpName=topics[currentTopicIndex];
+  const taskList=tasks[currentClass][currentSubject][tpName];
+  if(currentTaskIndex<taskList.length-1){
+    currentTaskIndex++;
+    loadTask();
+  } else {
+    alert('Thema abgeschlossen!');
   }
 }
 
-function nextExercise(){ showExercise(); }
-function updateProgress(){ document.getElementById('progressFill').style.width = progress+"%"; }
-function goToSubjects(){ showScreen('subjectScreen'); }
+// Französisch Extra
+function loadFrenchExtra(){}
+
+// Vokabeltrainer & Lernkarten (Placeholder)
+function showVocab(){ alert('Vokabeltrainer noch nicht implementiert'); }
+function showFlashcards(){ alert('Lernkarten noch nicht implementiert'); }
+
+showScreen('menuScreen');
 </script>
 
 </body>
