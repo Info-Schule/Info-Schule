@@ -1,167 +1,756 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MoodMap Game</title>
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<!-- Leaflet für Karte -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover" />
+<title>Subway Runner -- Mobile</title>
 <style>
-  body { font-family: Arial, sans-serif; margin:0; padding:0; background:#f0f4f8; }
-  #menu { background:#4CAF50; color:white; padding:10px; text-align:center; }
-  #menu button { margin:5px; padding:10px; border:none; border-radius:5px; cursor:pointer; }
-  #map { height:60vh; width:100%; margin-top:10px; border:2px solid #ccc; border-radius:10px; }
-  #loginForm, #signupForm { display:none; max-width:300px; margin:20px auto; padding:20px; border:1px solid #ccc; border-radius:10px; background:white; }
-  input { width:100%; margin:5px 0; padding:10px; border-radius:5px; border:1px solid #ccc; }
-  #status { text-align:center; margin:10px; }
+  :root{
+    --bg1:#061424; --bg2:#0b2138;
+    --panel:#053043cc; --glass-border:#25576e66;
+    --accent:#2ef0ff; --coin1:#fff5c2; --coin2:#ffd64a;
+    --playerTop:#ffe36b; --playerBot:#ffb62e;
+    --obs1:#ff5a60; --obs2:#d13b45;
+  }
+  html,body{height:100%;margin:0;background:linear-gradient(var(--bg1),var(--bg2));font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; -webkit-tap-highlight-color: transparent;}
+  #app{height:100vh;display:flex;align-items:center;justify-content:center;padding:10px;box-sizing:border-box}
+  canvas{width:100%;max-width:680px;height:calc(100vw*1.7);max-height:98vh;border-radius:18px;display:block;box-shadow:0 16px 40px #0009;background:transparent;touch-action:none}
+  /* HUD */
+  #topbar{position:fixed;left:12px;right:12px;top:12px;display:flex;justify-content:space-between;align-items:center;gap:8px;pointer-events:none}
+  .chip{pointer-events:auto;background:var(--panel);border:1px solid var(--glass-border);color:#eaf6ff;padding:8px 12px;border-radius:999px;font-weight:700;backdrop-filter:blur(6px)}
+  #centerMsg{position:fixed;inset:0;display:grid;place-items:center;pointer-events:none}
+  #centerMsg .card{pointer-events:auto;background:var(--panel);border:1px solid var(--glass-border);padding:18px 20px;border-radius:14px;text-align:center;backdrop-filter:blur(6px)}
+  #controls{position:fixed;left:0;right:0;bottom:12px;display:flex;justify-content:center;gap:10px;pointer-events:none}
+  .controlBtn{pointer-events:auto;background:#05212bdc;border:1px solid var(--glass-border);color:#eaf6ff;padding:12px 14px;border-radius:12px;font-weight:800;font-size:16px}
+  /* big touch target for mobile */
+  #leftBtn,#rightBtn,#jumpBtn,#slideBtn{width:68px;height:68px;border-radius:16px;display:flex;align-items:center;justify-content:center}
+  /* small helper: fullscreen prompt */
+  #fsPrompt{position:fixed;left:12px;bottom:12px;pointer-events:auto}
+  .mini{padding:8px 10px;font-size:14px;border-radius:10px}
+  @media(min-width:900px){
+    canvas{height:calc(min(680px,100vw)*1.2)}
+    #controls{bottom:22px}
+  }
 </style>
 </head>
 <body>
+  <div id="app">
+    <canvas id="game" width="360" height="612" aria-label="Endlos Runner Spiel"></canvas>
+  </div>
 
-<div id="menu">
-  <span id="usernameDisplay">Nicht angemeldet</span>
-  <button onclick="showLogin()">Login</button>
-  <button onclick="showSignup()">Signup</button>
-  <button onclick="logout()">Logout</button>
-  <button onclick="changeColor()">Farben ändern</button>
-</div>
+  <div id="topbar">
+    <div class="chip">Score: <span id="score">0</span></div>
+    <div style="display:flex;gap:8px">
+      <div class="chip">Münzen: <span id="coins">0</span></div>
+      <div class="chip">Best: <span id="best">0</span></div>
+    </div>
+  </div>
 
-<div id="loginForm">
-  <h3>Login</h3>
-  <input type="email" id="loginEmail" placeholder="Email">
-  <input type="password" id="loginPassword" placeholder="Passwort">
-  <button onclick="login()">Login</button>
-</div>
+  <div id="centerMsg" hidden>
+    <div class="card">
+      <h2 id="title">Tippe zum Start</h2>
+      <p id="subtitle">Wischen: ← → • Hoch: Springen • Buttons: Alternate</p>
+      <div style="height:8px"></div>
+      <div style="display:flex;gap:8px;justify-content:center">
+        <button id="startBtn" class="controlBtn mini">Start</button>
+        <button id="fullscreenBtn" class="controlBtn mini">Vollbild</button>
+      </div>
+    </div>
+  </div>
 
-<div id="signupForm">
-  <h3>Signup</h3>
-  <input type="text" id="signupName" placeholder="Name">
-  <input type="email" id="signupEmail" placeholder="Email">
-  <input type="password" id="signupPassword" placeholder="Passwort">
-  <button onclick="signup()">Registrieren</button>
-</div>
+  <div id="controls">
+    <div style="display:flex;gap:10px;pointer-events:none;align-items:center">
+      <button id="leftBtn" class="controlBtn" aria-label="Links">◀</button>
+      <button id="jumpBtn" class="controlBtn" aria-label="Springen">⬆</button>
+      <button id="rightBtn" class="controlBtn" aria-label="Rechts">▶</button>
+      <button id="slideBtn" class="controlBtn" aria-label="Rutschen">⤓</button>
+      <button id="pauseBtn" class="controlBtn" aria-label="Pause">⏯</button>
+    </div>
+  </div>
 
-<div id="status">Standort wird noch nicht ermittelt...</div>
-<div id="map"></div>
+  <div id="fsPrompt">
+    <button id="enableTilt" class="controlBtn mini">Tilt: Aus</button>
+  </div>
 
 <script>
-  // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+/* ===========================================================
+   Mobile-first Endlos-Runner (Singleplayer) - Komplett in JS
+   Features:
+   - Touch (swipe), Buttons und Tilt (DeviceOrientation)
+   - Mobile optimierungen: DPR limit, passive listeners
+   - Sehr gute Grafik: Parallax, particles, bloom-ish, motion trail
+   - Pause/Resume, Fullscreen prompt
+   - LocalStorage Highscore
+   =========================================================== */
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyDAnL8GOSj9LOE0FHWWuJG5Kkc6-AByNlo",
-  authDomain: "mood-map100.firebaseapp.com",
-  projectId: "mood-map100",
-  storageBucket: "mood-map100.firebasestorage.app",
-  messagingSenderId: "840085816046",
-  appId: "1:840085816046:web:56a1673b20edf81c47a9ff",
-  measurementId: "G-82J01KP764"
-};
+(() => {
+  // ---------- Config & canvas ----------
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d', { alpha: true });
+  const DPR_LIMIT = 2; // cap devicePixelRatio for mobile perf
+  let DPR = Math.max(1, Math.min(DPR_LIMIT, devicePixelRatio || 1));
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.database();
-
-  let map;
-  let userMarker;
-
-  // Karten-Initialisierung
-  function initMap() {
-    map = L.map('map').setView([51.1657, 10.4515], 6); // Start Deutschland
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+  function resize() {
+    const cssW = canvas.clientWidth;
+    const cssH = canvas.clientHeight;
+    canvas.width = Math.round(cssW * DPR);
+    canvas.height = Math.round(cssH * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   }
+  // Initial resize & on orient/resize
+  window.addEventListener('resize', resize, { passive: true });
+  window.addEventListener('orientationchange', () => { setTimeout(resize, 120); }, { passive: true });
+  resize();
 
-  initMap();
+  // Handy: reduce DPR on battery saver or low memory? (simple heuristic)
+  if(navigator.connection && navigator.connection.saveData) { DPR = 1; resize(); }
 
-  // Standort ermitteln
-  function getLocation() {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(position => {
-        const lat = position.coords.latitude;
-        const lon = position.coords.longitude;
-        if (userMarker) map.removeLayer(userMarker);
-        userMarker = L.marker([lat, lon]).addTo(map).bindPopup("Du bist hier").openPopup();
-        map.setView([lat, lon], 13);
-        document.getElementById('status').innerText = `Standort: ${lat.toFixed(4)}, ${lon.toFixed(4)}`;
-        // Speichern im Firebase DB
-        const user = auth.currentUser;
-        if(user) {
-          db.ref('users/' + user.uid + '/location').set({lat, lon});
-        }
-      }, () => {
-        document.getElementById('status').innerText = "Standort konnte nicht ermittelt werden.";
-      });
+  // ---------- Game world ----------
+  const W = () => canvas.width / DPR;
+  const H = () => canvas.height / DPR;
+  const LANES = 3;
+  const laneW = () => W() / LANES;
+  const groundY = () => H() * 0.78;
+
+  const state = {
+    running: false,
+    paused: false,
+    speed: 260,
+    speedMax: 680,
+    accel: 7.2,
+    spawnT: 0,
+    coinT: 0,
+    score: 0,
+    coins: 0,
+    best: Number(localStorage.getItem('mobile_runner_best') || 0),
+    time: 0
+  };
+
+  const player = {
+    lane: 1, x: 0, y: 0,
+    w: 40, h: 58, vy: 0, jumping: false, sliding: false,
+    trail: [], // positions for motion trail
+    tilt: 0 // tilt input
+  };
+
+  const ents = []; // obstacles & coins
+  const particles = []; // particle pool
+
+  function laneCenter(i){ return (i + 0.5) * laneW(); }
+
+  // ---------- Input (touch, swipe, buttons, tilt) ----------
+  // Buttons
+  const leftBtn = document.getElementById('leftBtn');
+  const rightBtn = document.getElementById('rightBtn');
+  const jumpBtn = document.getElementById('jumpBtn');
+  const slideBtn = document.getElementById('slideBtn');
+  const pauseBtn = document.getElementById('pauseBtn');
+  const startBtn = document.getElementById('startBtn');
+  const fullscreenBtn = document.getElementById('fullscreenBtn');
+  const enableTiltBtn = document.getElementById('enableTilt');
+  const centerMsg = document.getElementById('centerMsg');
+
+  leftBtn.addEventListener('touchstart', e => { e.preventDefault(); moveLane(-1); }, { passive:false });
+  rightBtn.addEventListener('touchstart', e => { e.preventDefault(); moveLane(1); }, { passive:false });
+  jumpBtn.addEventListener('touchstart', e => { e.preventDefault(); doJump(); }, { passive:false });
+  slideBtn.addEventListener('touchstart', e => { e.preventDefault(); doSlide(); }, { passive:false });
+  pauseBtn.addEventListener('touchstart', e => { e.preventDefault(); togglePause(); }, { passive:false });
+
+  startBtn.addEventListener('click', startGame);
+  fullscreenBtn.addEventListener('click', tryFullscreen);
+
+  // Keyboard for desktop sanity
+  window.addEventListener('keydown', e => {
+    if(e.key === 'ArrowLeft') moveLane(-1);
+    else if(e.key === 'ArrowRight') moveLane(1);
+    else if(e.key === 'ArrowUp' || e.key === ' ') doJump();
+    else if(e.key.toLowerCase() === 'p') togglePause();
+    else if(e.key === 'Enter' && !state.running) startGame();
+  });
+
+  // Swipe detection
+  let touchStart = null;
+  canvas.addEventListener('pointerdown', e => {
+    touchStart = {x: e.clientX, y: e.clientY, t: performance.now()};
+  }, {passive:true});
+  canvas.addEventListener('pointerup', e => {
+    if(!touchStart) return;
+    const dx = e.clientX - touchStart.x;
+    const dy = e.clientY - touchStart.y;
+    const dt = performance.now() - touchStart.t;
+    const min = 22;
+    if(Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > min && dt < 450) {
+      moveLane(dx > 0 ? 1 : -1);
+    } else if(dy < -min && dt < 500) {
+      doJump();
+    } else if(dy > min && dt < 450) {
+      doSlide();
     } else {
-      document.getElementById('status').innerText = "Geolocation wird von diesem Browser nicht unterstützt.";
+      // tap -- start or unpause
+      if(!state.running) startGame();
+      else if(state.paused) togglePause();
     }
-  }
+    touchStart = null;
+  }, {passive:true});
 
-  // Login/Signup/Logout
-  function showLogin() { document.getElementById('loginForm').style.display='block'; document.getElementById('signupForm').style.display='none'; }
-  function showSignup() { document.getElementById('signupForm').style.display='block'; document.getElementById('loginForm').style.display='none'; }
-
-  function signup() {
-    const name = document.getElementById('signupName').value;
-    const email = document.getElementById('signupEmail').value;
-    const password = document.getElementById('signupPassword').value;
-    auth.createUserWithEmailAndPassword(email, password).then(cred => {
-      db.ref('users/' + cred.user.uid).set({name, level:1});
-      document.getElementById('usernameDisplay').innerText = name;
-      getLocation();
-    }).catch(err => alert(err.message));
-  }
-
-  function login() {
-    const email = document.getElementById('loginEmail').value;
-    const password = document.getElementById('loginPassword').value;
-    auth.signInWithEmailAndPassword(email, password).then(cred => {
-      db.ref('users/' + cred.user.uid + '/name').once('value').then(snap => {
-        document.getElementById('usernameDisplay').innerText = snap.val();
-      });
-      getLocation();
-    }).catch(err => alert(err.message));
-  }
-
-  function logout() {
-    auth.signOut();
-    document.getElementById('usernameDisplay').innerText = "Nicht angemeldet";
-    document.getElementById('status').innerText = "Standort wird noch nicht ermittelt...";
-    if(userMarker) map.removeLayer(userMarker);
-  }
-
-  // Farben ändern
-  const colors = ["#4CAF50", "#FF5722", "#2196F3", "#9C27B0", "#FFC107"];
-  let colorIndex = 0;
-  function changeColor() {
-    colorIndex = (colorIndex + 1) % colors.length;
-    document.getElementById('menu').style.background = colors[colorIndex];
-  }
-
-  // Auth state listener
-  auth.onAuthStateChanged(user => {
-    if(user){
-      db.ref('users/' + user.uid + '/name').once('value').then(snap => {
-        document.getElementById('usernameDisplay').innerText = snap.val();
-      });
-      getLocation();
+  // Tilt control (optional, requests permission on iOS)
+  let tiltEnabled = false;
+  enableTiltBtn.addEventListener('click', async () => {
+    if(typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) {
+      try {
+        const res = await DeviceOrientationEvent.requestPermission();
+        if(res === 'granted') {
+          enableTilt(true);
+        } else enableTilt(false);
+      } catch(err) {
+        enableTilt(false);
+      }
+    } else {
+      // not iOS, enable directly
+      enableTilt(true);
     }
   });
-</script>
+  function enableTilt(on) {
+    tiltEnabled = on;
+    enableTiltBtn.textContent = 'Tilt: ' + (on ? 'An' : 'Aus');
+    if(on) {
+      window.addEventListener('deviceorientation', handleTilt, true);
+    } else {
+      window.removeEventListener('deviceorientation', handleTilt, true);
+      player.tilt = 0;
+    }
+  }
+  function handleTilt(e) {
+    // e.gamma ~ left/right tilt in degrees (-90..90)
+    if(e.gamma !== null) {
+      const g = Math.max(-30, Math.min(30, e.gamma));
+      player.tilt = g / 30; // normalized -1..1
+      // small automatic lane shift threshold
+      if(Math.abs(player.tilt) > 0.6 && state.running && !state.paused) {
+        moveLane(player.tilt > 0 ? 1 : -1);
+      }
+    }
+  }
 
+  // ---------- Controls actions ----------
+  function moveLane(dir) {
+    if(!state.running || state.paused) return;
+    player.lane = Math.max(0, Math.min(LANES - 1, player.lane + dir));
+    // small feedback particle
+    spawnParticles(player.x + dir * 12, player.y, 'dust', 6);
+  }
+  function doJump() {
+    if(!state.running || state.paused) return;
+    if(!player.jumping && !player.sliding) {
+      player.vy = -420;
+      player.jumping = true;
+      spawnParticles(player.x, player.y + player.h * 0.2, 'dust', 10);
+    }
+  }
+  function doSlide() {
+    if(!state.running || state.paused) return;
+    if(!player.jumping) {
+      player.sliding = true;
+      // slide duration
+      setTimeout(() => { player.sliding = false; }, 550);
+      spawnParticles(player.x, player.y + player.h * 0.2, 'dust', 8);
+    }
+  }
+
+  // Pause toggle
+  function togglePause() {
+    if(!state.running) return;
+    state.paused = !state.paused;
+    showCenter(state.paused ? 'Pausiert' : '', state.paused ? 'Tippe erneut zum Fortsetzen' : '', state.paused);
+    if(!state.paused) hideCenter();
+  }
+
+  // Fullscreen helper
+  async function tryFullscreen() {
+    try {
+      if(document.fullscreenElement) await document.exitFullscreen();
+      else await document.documentElement.requestFullscreen();
+    } catch(e) {/*ignore*/}
+  }
+
+  // ---------- Game lifecycle ----------
+  function reset() {
+    state.running = false;
+    state.paused = false;
+    state.speed = 260;
+    state.spawnT = 0;
+    state.coinT = 0;
+    state.score = 0;
+    state.coins = 0;
+    state.time = 0;
+
+    player.lane = 1;
+    player.x = laneCenter(1);
+    player.y = groundY();
+    player.vy = 0;
+    player.jumping = false;
+    player.sliding = false;
+    player.trail.length = 0;
+
+    ents.length = 0;
+    particles.length = 0;
+
+    updateHUD();
+    showCenter('Tippe zum Start', 'Wische ←/→ • Hoch = Springen • Unten = Rutschen', true);
+    renderFrame(0);
+  }
+  function startGame() {
+    if(state.running) return;
+    hideCenter();
+    state.running = true;
+    state.paused = false;
+    lastT = performance.now();
+    requestAnimationFrame(loop);
+  }
+  function gameOver() {
+    state.running = false;
+    state.paused = false;
+    if(state.score > state.best) {
+      state.best = state.score;
+      localStorage.setItem('mobile_runner_best', state.best);
+    }
+    updateHUD();
+    showCenter('Game Over', 'Tippe für Neustart', true);
+  }
+
+  // ---------- Spawning ----------
+  function spawnObstacle() {
+    const lane = Math.floor(Math.random() * LANES);
+    // rare big train
+    const type = Math.random() < 0.14 ? 'train' : 'obs';
+    if(type === 'train') {
+      ents.push({type:'train', lane, y:-180, w: laneW()*0.96, h: 90, t:0});
+    } else {
+      const w = laneW()*0.56, h = 36 + Math.random()*28;
+      ents.push({type:'obs', lane, y:-h-8, w, h, t:0});
+    }
+  }
+  function spawnCoinRow() {
+    const lane = Math.floor(Math.random()*LANES);
+    const count = 4 + Math.floor(Math.random()*3); // 4..6
+    const spacing = 60;
+    for(let i=0;i<count;i++){
+      ents.push({type:'coin', lane, y: -i*spacing-26, r:10, spin:Math.random()*Math.PI*2});
+    }
+  }
+
+  // ---------- Particles ----------
+  function spawnParticles(x,y,type,count){
+    for(let i=0;i<count;i++){
+      if(particles.length>400) break; // cap
+      if(type === 'dust'){
+        particles.push({
+          type:'dust', x, y,
+          vx:(Math.random()*2-1)*60, vy:-60-Math.random()*60, g:260,
+          life:0.7 + Math.random()*0.6, age:0, s:4+Math.random()*6, a:1
+        });
+      } else if(type === 'spark'){
+        particles.push({
+          type:'spark', x, y,
+          vx:(Math.random()*2-1)*200, vy:-120-Math.random()*120, g:400,
+          life:0.7 + Math.random()*0.6, age:0, a:1
+        });
+      }
+    }
+  }
+
+  // ---------- Loop ----------
+  let lastT = performance.now();
+  function loop(t) {
+    if(!state.running) return;
+    const dt = Math.min(0.033, (t - lastT) / 1000);
+    lastT = t;
+    if(!state.paused) {
+      update(dt);
+      renderFrame(dt);
+    }
+    requestAnimationFrame(loop);
+  }
+
+  function update(dt) {
+    state.time += dt;
+    // speed up over time
+    state.speed = Math.min(state.speedMax, state.speed + state.accel * dt);
+
+    // lane follow
+    player.x += (laneCenter(player.lane) - player.x) * Math.min(1, dt * 12);
+
+    // tilt small nudge if enabled
+    if(tiltEnabled && Math.abs(player.tilt) > 0.12) {
+      const dir = player.tilt > 0 ? 1 : -1;
+      // only move if tilt maintained (simple)
+      if(!player._tiltCooldown) {
+        player._tiltCooldown = 0.35;
+        moveLane(dir);
+      } else {
+        player._tiltCooldown -= dt;
+        if(player._tiltCooldown < 0) player._tiltCooldown = 0;
+      }
+    }
+
+    // physics
+    player.vy += 980 * dt;
+    player.y += player.vy * dt;
+    if(player.y >= groundY()) {
+      player.y = groundY();
+      player.vy = 0;
+      player.jumping = false;
+    }
+
+    // slide behavior reduces hitbox (handled in collision)
+    // trail
+    player.trail.unshift({x:player.x, y:player.y});
+    if(player.trail.length > 14) player.trail.pop();
+
+    // spawn cadence
+    state.spawnT -= dt;
+    state.coinT -= dt;
+    if(state.spawnT <= 0) {
+      spawnObstacle();
+      state.spawnT = Math.max(0.45, 1.1 - (state.speed - 260) / 480);
+    }
+    if(state.coinT <= 0) {
+      spawnCoinRow();
+      state.coinT = 1.05 + Math.random() * 0.9;
+    }
+
+    // move ents
+    for(const e of ents) { e.y += state.speed * dt; e.t = (e.t || 0) + dt; }
+
+    // move particles
+    for(let i=particles.length-1;i>=0;i--){
+      const p = particles[i];
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vy += p.g * dt;
+      p.age += dt;
+      p.a = Math.max(0, 1 - (p.age / p.life));
+      if(p.age >= p.life || p.y > H() + 40) particles.splice(i,1);
+    }
+
+    // collisions & scoring
+    const px = player.x, py = player.y, pw = player.w, ph = player.h;
+    for(let i=ents.length-1;i>=0;i--){
+      const e = ents[i];
+      // cull off screen
+      if(e.y > H() + 80) { ents.splice(i,1); continue; }
+      if(e.lane !== player.lane) continue;
+
+      if(e.type === 'obs' || e.type === 'train') {
+        const ex = laneCenter(e.lane) - e.w / 2;
+        const ey = e.y, ew = e.w, eh = e.h;
+        // adapt hitbox for sliding
+        const phAdj = player.sliding ? ph * 0.6 : ph;
+        const pyAdj = player.sliding ? py - ph * 0.4 : py - ph;
+        if(rectsOverlap(px - pw / 2, pyAdj, pw, phAdj, ex, ey, ew, eh)) {
+          // hit
+          spawnParticles(px, py - ph * 0.4, 'spark', 24);
+          gameOver();
+          return;
+        }
+      } else if(e.type === 'coin') {
+        const cx = laneCenter(e.lane), cy = e.y, r = e.r;
+        if(circleRectOverlap(cx, cy, r, px - pw / 2, py - ph, pw, ph)) {
+          ents.splice(i,1);
+          state.coins++;
+          state.score += 12;
+          spawnParticles(cx, cy, 'spark', 12);
+          pulseUpdate('#coins');
+        }
+      }
+    }
+
+    // distance-based score
+    state.score += Math.floor(dt * state.speed * 0.2);
+    updateHUD();
+  }
+
+  // ---------- Rendering ----------
+  function renderFrame(dt) {
+    // clear
+    ctx.clearRect(0, 0, W(), H());
+    // draw background (sky + parallax city)
+    drawSky();
+    drawCityParallax();
+    // draw track and lanes perspective
+    drawTrack();
+    // fog behind entities
+    drawFog(0.06);
+    // entities
+    for(const e of ents) {
+      if(e.type === 'train') drawTrain(e);
+      else if(e.type === 'obs') drawObstacle(e);
+      else if(e.type === 'coin') drawCoin(e);
+    }
+    // particles
+    drawParticles();
+    // player
+    drawPlayer();
+    // simple post fx: vignette + soft bloom trick
+    drawVignette();
+  }
+
+  // --- Draw helpers (clean and tuned for mobile) ---
+  function drawSky() {
+    const g = ctx.createLinearGradient(0, 0, 0, H());
+    g.addColorStop(0, '#061424'); g.addColorStop(1, '#0b2138');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W(), H());
+    // subtle sun glow
+    const sx = W() * 0.82, sy = H() * 0.12;
+    const rg = ctx.createRadialGradient(sx, sy, 0, sx, sy, 60);
+    rg.addColorStop(0, 'rgba(255,230,160,0.6)'); rg.addColorStop(1, 'rgba(255,230,160,0)');
+    ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(sx, sy, 60, 0, Math.PI * 2); ctx.fill();
+  }
+
+  function drawCityParallax(){
+    const baseY = H() * 0.28;
+    for(let layer=0; layer<3; layer++){
+      const par = 1 - layer * 0.18;
+      const offset = (state.time * 35 * par) % 80;
+      const y = baseY + layer * 16;
+      ctx.fillStyle = `rgba(28,56,84,${0.45 - layer*0.12})`;
+      for(let i=-2;i<12;i++){
+        const x = (i * 80 - offset);
+        const w = 52 + (i%3) * 12;
+        const h = 36 + (i%5) * 8 + layer * 6;
+        roundRect(ctx, x, y - h, w, h, 4, true, false);
+      }
+    }
+  }
+
+  function drawTrack(){
+    const vanY = H() * 0.18;
+    const roadTop = laneW() * 2.2;
+    const roadBot = W() * 0.92;
+    pathQuad(W()/2 - roadTop/2, vanY, W()/2 + roadTop/2, vanY, W()/2 + roadBot/2, H(), W()/2 - roadBot/2, H(), true);
+
+    // rails
+    ctx.strokeStyle = '#15425d'; ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(W()/2 - roadTop/2 + 10, vanY);
+    ctx.lineTo(W()/2 - roadBot/2 + 24, H());
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(W()/2 + roadTop/2 - 10, vanY);
+    ctx.lineTo(W()/2 + roadBot/2 - 24, H());
+    ctx.stroke();
+
+    // lane separators (dashed)
+    ctx.setLineDash([12,18]); ctx.lineWidth = 2.2; ctx.strokeStyle = 'rgba(46,109,145,0.9)';
+    for(let i=1;i<LANES;i++){
+      const topX = W()/2 + (i - 1.5) * (roadTop / LANES);
+      const botX = W()/2 + (i - 1.5) * (roadBot / LANES);
+      ctx.beginPath(); ctx.moveTo(topX, vanY); ctx.lineTo(botX, H()); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+  }
+
+  function drawFog(alpha){
+    ctx.fillStyle = `rgba(145,182,255,${0.04})`;
+    ctx.fillRect(0, H()*0.62, W(), H()*0.38);
+  }
+
+  function drawObstacle(e){
+    const x = laneCenter(e.lane) - e.w / 2;
+    const y = e.y;
+    // shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    roundRect(ctx, x + 3, y + 8, e.w, e.h, 8, true, false);
+    // gradient body
+    const g = ctx.createLinearGradient(x, y, x, y + e.h);
+    g.addColorStop(0, '#ff5a60'); g.addColorStop(1, '#d13b45');
+    ctx.fillStyle = g; roundRect(ctx, x, y, e.w, e.h, 8, true, false);
+    // highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.12)'; roundRect(ctx, x + 6, y + 6, e.w - 12, 10, 6, true, false);
+  }
+
+  function drawTrain(e){
+    const x = laneCenter(e.lane) - e.w / 2;
+    const y = e.y;
+    // shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    roundRect(ctx, x + 6, y + 12, e.w, e.h, 12, true, false);
+    // body
+    const g = ctx.createLinearGradient(x, y, x, y + e.h);
+    g.addColorStop(0, '#273a57'); g.addColorStop(1,'#172734');
+    ctx.fillStyle = g; roundRect(ctx, x, y, e.w, e.h, 12, true, false);
+    // windows
+    ctx.fillStyle = 'rgba(200,230,255,0.18)';
+    const cols = Math.max(2, Math.floor((e.w - 40) / 48));
+    for(let i=0;i<cols;i++){
+      const wx = x + 12 + i * ((e.w - 24) / cols);
+      roundRect(ctx, wx, y + 8, (e.w - 24) / cols - 8, 16, 4, true, false);
+    }
+  }
+
+  function drawCoin(e) {
+    const cx = laneCenter(e.lane), cy = e.y;
+    const rx = e.r, ry = e.r * (0.6 + 0.4 * Math.abs(Math.cos(e.spin || 0)));
+    // glow
+    ctx.globalCompositeOperation = 'lighter';
+    const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, 22);
+    gr.addColorStop(0, 'rgba(137,255,245,0.55)'); gr.addColorStop(1, 'rgba(137,255,245,0)');
+    ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(cx, cy, 20, 0, Math.PI*2); ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
+    // body
+    const g = ctx.createLinearGradient(cx, cy - ry, cx, cy + ry);
+    g.addColorStop(0, 'rgba(255,245,194,1)'); g.addColorStop(1, 'rgba(255,214,77,1)');
+    shadowEllipse(ctx, cx + 2, cy + 3, rx, ry, 0.36);
+    ellipse(ctx, cx, cy, rx, ry, g);
+    // spec
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(-0.25); ctx.fillStyle = 'rgba(255,255,255,0.35)'; ellipse(ctx, 0, 0, rx*0.12, ry*0.9, ctx.fillStyle); ctx.restore();
+  }
+
+  function drawParticles() {
+    for(const p of particles){
+      ctx.globalAlpha = p.a;
+      if(p.type === 'dust') {
+        ctx.fillStyle = 'rgba(255,255,255,0.08)';
+        ctx.beginPath(); ctx.ellipse(p.x, p.y, p.s*1.2, p.s*0.6, 0, 0, Math.PI*2); ctx.fill();
+      } else if(p.type === 'spark') {
+        ctx.strokeStyle = 'rgba(255,220,140,0.95)'; ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - p.vx * 0.04, p.y - p.vy * 0.04); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function drawPlayer() {
+    const px = player.x, py = player.y, pw = player.w, ph = player.h;
+    // trail
+    ctx.globalAlpha = 0.7;
+    for(let i=player.trail.length-1;i>=2;i-=2){
+      const p = player.trail[i]; const a = (1 - i/player.trail.length) * 0.45;
+      ctx.globalAlpha = a;
+      drawPlayerBody(p.x, p.y, pw, ph, true);
+    }
+    ctx.globalAlpha = 1;
+    drawPlayerBody(px, py, pw, ph, false);
+  }
+
+  function drawPlayerBody(px, py, pw, ph, fade) {
+    // shadow ellipse
+    shadowEllipse(ctx, px, groundY() + 6, pw*0.45, 6, 0.32);
+    // body gradient
+    const g = ctx.createLinearGradient(px, py - ph, px, py);
+    g.addColorStop(0, '#ffe36b'); g.addColorStop(1, '#ffb62e');
+    roundRect(ctx, px - pw/2, py - ph, pw, ph, 10, true, false);
+    ctx.fillStyle = g; roundRect(ctx, px - pw/2, py - ph, pw, ph, 10, true, false);
+    // accent
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+    ctx.fillRect(px - pw/2 + 6, py - ph + 14, pw - 12, 6);
+    // head
+    ctx.beginPath(); ctx.arc(px, py - ph - 12, 12, 0, Math.PI*2); ctx.fillStyle = '#ffeab0'; ctx.fill();
+  }
+
+  function drawVignette() {
+    const vg = ctx.createRadialGradient(W()/2, H()*0.6, Math.min(W(),H())*0.2, W()/2, H()*0.6, Math.max(W(),H())*0.75);
+    vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.12)');
+    ctx.fillStyle = vg; ctx.fillRect(0,0,W(),H());
+  }
+
+  // ---------- Utility draw primitives ----------
+  function roundRect(c, x, y, w, h, r, fill, stroke) {
+    const rr = Math.min(r, w/2, h/2);
+    c.beginPath();
+    c.moveTo(x+rr, y);
+    c.arcTo(x + w, y, x + w, y + h, rr);
+    c.arcTo(x + w, y + h, x, y + h, rr);
+    c.arcTo(x, y + h, x, y, rr);
+    c.arcTo(x, y, x + w, y, rr);
+    if(fill) c.fill();
+    if(stroke) c.stroke();
+  }
+  function pathQuad(x1,y1,x2,y2,x3,y3,x4,y4,fill) {
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.lineTo(x3,y3); ctx.lineTo(x4,y4); ctx.closePath();
+    if(fill) ctx.fill();
+  }
+  function ellipse(c, cx, cy, rx, ry, fillStyle) {
+    c.beginPath(); c.ellipse(cx, cy, rx, ry, 0, 0, Math.PI*2); c.fillStyle = fillStyle; c.fill();
+  }
+  function shadowEllipse(c, cx, cy, rx, ry, alpha) {
+    c.save(); c.fillStyle = `rgba(0,0,0,${alpha})`; c.beginPath(); c.ellipse(cx, cy, rx, ry, 0, 0, Math.PI*2); c.fill(); c.restore();
+  }
+  function rectsOverlap(ax,ay,aw,ah,bx,by,bw,bh){
+    return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
+  }
+  function circleRectOverlap(cx,cy,r, rx,ry,rw,rh){
+    const nx = Math.max(rx, Math.min(cx, rx+rw));
+    const ny = Math.max(ry, Math.min(cy, ry+rh));
+    const dx = cx - nx, dy = cy - ny; return (dx*dx + dy*dy) <= r*r;
+  }
+
+  // ---------- HUD helpers ----------
+  const scoreEl = document.getElementById('score');
+  const coinsEl = document.getElementById('coins');
+  const bestEl = document.getElementById('best');
+  function updateHUD(){
+    scoreEl.textContent = Math.floor(state.score);
+    coinsEl.textContent = state.coins;
+    bestEl.textContent = state.best;
+  }
+  function pulseUpdate(sel) {
+    const el = document.querySelector(sel);
+    el.animate([{transform:'scale(1)'},{transform:'scale(1.18)'},{transform:'scale(1)'}], {duration:170});
+  }
+
+  // ---------- Center messages ----------
+  function showCenter(t, s, show = true) {
+    document.getElementById('title').textContent = t || '';
+    document.getElementById('subtitle').textContent = s || '';
+    centerMsg.hidden = !show;
+  }
+  function hideCenter() { centerMsg.hidden = true; }
+
+  // ---------- Game Over & scoring handled above ----------
+
+  // ---------- Initial kick & behaviour ----------
+  function renderFrameOnce() { renderFrame(0); }
+  resize();
+  reset();
+
+  // Prevent screen from sleeping? (optional; not guaranteed)
+  let wakeLock = null;
+  async function requestWakeLock() {
+    try {
+      if('wakeLock' in navigator) {
+        wakeLock = await navigator.wakeLock.request('screen');
+      }
+    } catch(e){}
+  }
+  // ask wake lock on start
+  document.getElementById('startBtn').addEventListener('click', requestWakeLock);
+
+  // Softly request fullscreen on first user interaction (mobile UX)
+  let firstInteraction = false;
+  function promptFullscreenOnce() {
+    if(firstInteraction) return;
+    firstInteraction = true;
+    // try to show native fullscreen prompt only when available
+    // don't force -- user can click the Vollbild button
+  }
+  canvas.addEventListener('pointerdown', promptFullscreenOnce, {passive:true});
+  canvas.addEventListener('pointerdown', ()=>{ if(!state.running) startGame(); }, {passive:true});
+
+  // ---------- End of game code ----------
+
+  // expose reset for restart when center tapped
+  centerMsg.addEventListener('click', () => {
+    if(!state.running) reset();
+    else if(state.paused) { state.paused = false; hideCenter(); }
+  });
+
+  // Make sure to recalc size initially
+  setTimeout(() => { resize(); renderFrameOnce(); }, 100);
+
+  // debug: show best in HUD initially
+  updateHUD();
+})();
+</script>
 </body>
 </html>
