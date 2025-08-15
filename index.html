@@ -14,22 +14,110 @@ body {
   align-items:center;
   flex-direction:column;
   min-height:100vh;
+  overflow:hidden;
+  animation: bgMove 20s linear infinite;
 }
-.screen { display:none; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100vh; transition:opacity 0.5s; }
+@keyframes bgMove {
+  0%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+  100%{background-position:0% 50%}
+}
+
+.screen { 
+  display:none; 
+  flex-direction:column; 
+  align-items:center; 
+  justify-content:center; 
+  width:100%; 
+  height:100vh; 
+  transition:opacity 0.8s ease-in-out; 
+  padding:20px; 
+  box-sizing:border-box; 
+  overflow-y:auto; 
+}
 .active { display:flex; opacity:1; }
-h1,h2,h3 { color:#fff; text-align:center; margin:10px; text-shadow:2px 2px 4px rgba(0,0,0,0.3); }
-button { padding:10px 25px; margin:10px; border:none; border-radius:12px; cursor:pointer; transition: transform 0.2s, background 0.3s; font-weight:bold; color:white; font-size:16px; }
-button:hover { transform:scale(1.05); filter:brightness(1.2); }
+
+h1,h2,h3 { 
+  color:#fff; 
+  text-align:center; 
+  margin:10px; 
+  text-shadow:2px 2px 4px rgba(0,0,0,0.3); 
+  animation: fadeIn 1s ease forwards;
+}
+@keyframes fadeIn {
+  from{opacity:0; transform:translateY(-20px);}
+  to{opacity:1; transform:translateY(0);}
+}
+
+button { 
+  padding:12px 28px; 
+  margin:10px; 
+  border:none; 
+  border-radius:15px; 
+  cursor:pointer; 
+  transition: transform 0.3s, background 0.3s, box-shadow 0.3s; 
+  font-weight:bold; 
+  color:white; 
+  font-size:16px; 
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+}
+button:hover { 
+  transform:scale(1.1) rotate(-2deg); 
+  filter:brightness(1.2); 
+  box-shadow: 0 8px 12px rgba(0,0,0,0.3);
+}
+
 #menuScreen button { background:#6c5ce7; }
 #classScreen button { background:#00b894; }
 #subjectScreen button { background:#fd79a8; }
 #topicScreen button { background:#e17055; }
 #taskScreen button { background:#00cec9; }
-#progressBar { width:80%; height:25px; background:rgba(255,255,255,0.3); border-radius:12px; margin:20px 0; overflow:hidden; }
-#progressFill { height:100%; width:0%; background:#ffeaa7; border-radius:12px; transition: width 0.5s ease; }
-#logo { font-size:48px; font-weight:bold; color:#fff; text-shadow:2px 2px 6px rgba(0,0,0,0.4); margin:20px; }
-#credits { font-size:14px; color:#fff; margin-top:10px; text-shadow:1px 1px 2px rgba(0,0,0,0.4);}
-select { padding:10px; font-size:16px; border-radius:8px; border:none; margin:10px 0; text-align:center; }
+
+#progressBar { 
+  width:80%; 
+  height:25px; 
+  background:rgba(255,255,255,0.3); 
+  border-radius:12px; 
+  margin:20px 0; 
+  overflow:hidden; 
+}
+#progressFill { 
+  height:100%; 
+  width:0%; 
+  background:#ffeaa7; 
+  border-radius:12px; 
+  transition: width 0.7s ease; 
+}
+
+#logo { 
+  font-size:48px; 
+  font-weight:bold; 
+  color:#fff; 
+  text-shadow:2px 2px 6px rgba(0,0,0,0.4); 
+  margin:20px; 
+  animation: pulse 2s infinite; 
+}
+@keyframes pulse {
+  0%{transform:scale(1);}
+  50%{transform:scale(1.05);}
+  100%{transform:scale(1);}
+}
+
+#credits { 
+  font-size:14px; 
+  color:#fff; 
+  margin-top:10px;
+  text-shadow:1px 1px 2px rgba(0,0,0,0.4);
+}
+
+#taskArea h3 {
+  animation: flipIn 0.6s ease forwards;
+  backface-visibility: hidden;
+}
+@keyframes flipIn {
+  from{transform:rotateY(90deg); opacity:0;}
+  to{transform:rotateY(0deg); opacity:1;}
+}
 </style>
 </head>
 <body>
@@ -37,34 +125,29 @@ select { padding:10px; font-size:16px; border-radius:8px; border:none; margin:10
 <div id="logo">GGLernen</div>
 <div id="credits">von Peter Beulker</div>
 
-<!-- Start Menu -->
 <div id="menuScreen" class="screen active">
   <h1>Willkommen bei GGLernen!</h1>
   <button onclick="showScreen('classScreen')">Start</button>
 </div>
 
-<!-- Class Selection -->
 <div id="classScreen" class="screen">
   <h2>Wähle deine Klasse</h2>
   <div id="classButtons"></div>
   <button onclick="showScreen('menuScreen')">Zurück</button>
 </div>
 
-<!-- Subject Selection -->
 <div id="subjectScreen" class="screen">
   <h2>Wähle dein Fach</h2>
   <div id="subjectButtons"></div>
   <button onclick="showScreen('classScreen')">Zurück</button>
 </div>
 
-<!-- Topic Selection -->
 <div id="topicScreen" class="screen">
   <h2>Wähle ein Themengebiet</h2>
   <div id="topicButtons"></div>
   <button onclick="showScreen('subjectScreen')">Zurück</button>
 </div>
 
-<!-- Task Screen -->
 <div id="taskScreen" class="screen">
   <h2 id="taskTitle">Aufgaben</h2>
   <div id="taskArea"></div>
@@ -73,123 +156,65 @@ select { padding:10px; font-size:16px; border-radius:8px; border:none; margin:10
   <button onclick="showScreen('topicScreen')">Zurück</button>
 </div>
 
-<!-- Französisch Extra Menu -->
-<div id="frenchExtraScreen" class="screen">
-  <h2>Französisch Tools</h2>
-  <button onclick="showVocab()">Vokabeltrainer</button>
-  <button onclick="showFlashcards()">Lernkarten</button>
-  <button onclick="showScreen('subjectScreen')">Zurück</button>
-</div>
-
 <script>
-// Daten vorbereiten
-const classes = Array.from({length:9},(_,i)=>i+5); // 5-13
-const subjects = ['Französisch','Mathe','Deutsch'];
-const topics = ['Thema 1','Thema 2','Thema 3','Thema 4','Thema 5','Thema 6','Thema 7'];
-const maxTasks = 10; // max Aufgaben pro Thema
-let currentClass, currentSubject, currentTopicIndex, currentTaskIndex;
+// Klassen und Fächer
+const classes = ["5","6","7","8","9","10","11","12","13"];
+const subjects = ["Mathe","Deutsch","Französisch"];
+const tasks = {
+  "Mathe":{"5":{"Addition & Subtraktion":["345+678","900-456","123+789","567-234","345+123"],"Multiplikation":["12*8","15*7","9*13","11*6","14*5"]}},
+  "Deutsch":{"5":{"Grammatik":["Bilde Satz mit 'weil'","Subjekt: 'Der Hund läuft.'","Prädikat: 'Die Katze schläft'","Pronomen: '___ geht nach Hause'","Finde Adjektiv: 'Der große Baum'"],"Rechtschreibung":["Schreibe: 'Fahrrad, Schokolade, Apfel'","Schreibe: 'Freund, Buch, Lehrer'","Setze Buchstaben ein: 'Sch__ler'","Satz korrekt: 'ich gehe zur schule.'","Korrigiere Satz: 'der hund isst.'"]}},
+  "Französisch":{"5":{"Vokabeltrainer":["Haus -> ?","Baum -> ?","Katze -> ?","Hund -> ?","Schule -> ?"],"Lernkarten":["Konjugation 'être'","Konjugation 'avoir'","Satz mit 'aller'","Satz mit 'faire'","Satz mit 'venir'"]}}
+};
 
-// Generiere Dummy Aufgaben (kannst du ersetzen)
-const tasks = {};
-classes.forEach(cls=>{
-  tasks[cls]={};
-  subjects.forEach(sub=>{
-    tasks[cls][sub]={};
-    topics.forEach(tp=>{
-      tasks[cls][sub][tp]=Array.from({length:maxTasks},(_,i)=>`Aufgabe ${i+1} zu ${tp} in ${sub} Klasse ${cls}`);
-    });
-  });
-});
+let currentClass=null,currentSubject=null,currentTopic=null,currentTaskIndex=0;
 
-// Screen wechseln
 function showScreen(screenId){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(screenId).classList.add('active');
-  if(screenId==='classScreen') loadClasses();
-  if(screenId==='subjectScreen') loadSubjects();
-  if(screenId==='topicScreen') loadTopics();
-  if(screenId==='taskScreen') loadTask();
-  if(screenId==='frenchExtraScreen') loadFrenchExtra();
 }
 
-// Klassen Buttons
-function loadClasses(){
-  const container=document.getElementById('classButtons');
-  container.innerHTML='';
-  classes.forEach(c=>{
+function createButtons(containerId, items, callback){
+  const container=document.getElementById(containerId);
+  container.innerHTML="";
+  items.forEach(i=>{
     const btn=document.createElement('button');
-    btn.textContent=`Klasse ${c}`;
-    btn.onclick=()=>{currentClass=c; showScreen('subjectScreen');};
+    btn.innerText=i;
+    btn.onclick=()=>callback(i);
     container.appendChild(btn);
   });
 }
 
-// Fächer Buttons
-function loadSubjects(){
-  const container=document.getElementById('subjectButtons');
-  container.innerHTML='';
-  subjects.forEach(s=>{
-    const btn=document.createElement('button');
-    btn.textContent=s;
-    btn.onclick=()=>{
-      currentSubject=s;
-      if(s==='Französisch'){ showScreen('frenchExtraScreen'); } else { showScreen('topicScreen'); }
-    };
-    container.appendChild(btn);
-  });
-}
-
-// Themen Buttons
-function loadTopics(){
-  const container=document.getElementById('topicButtons');
-  container.innerHTML='';
-  topics.forEach((t,i)=>{
-    const btn=document.createElement('button');
-    btn.textContent=t;
-    btn.onclick=()=>{
-      currentTopicIndex=i;
+// Klasse auswählen
+createButtons("classButtons", classes, cls=>{
+  currentClass=cls;
+  createButtons("subjectButtons", subjects, subj=>{
+    currentSubject=subj;
+    const topicList=Object.keys(tasks[subj][cls]||{});
+    createButtons("topicButtons", topicList, t=>{
+      currentTopic=t;
       currentTaskIndex=0;
+      showTask();
       showScreen('taskScreen');
-    };
-    container.appendChild(btn);
+    });
+    showScreen('subjectScreen');
   });
-}
+  showScreen('classScreen');
+});
 
-// Aufgaben Laden
-function loadTask(){
+function showTask(){
+  const taskArray=tasks[currentSubject][currentClass][currentTopic];
+  if(!taskArray) return;
   const taskArea=document.getElementById('taskArea');
-  taskArea.innerHTML='';
-  const tpName=topics[currentTopicIndex];
-  const taskList=tasks[currentClass][currentSubject][tpName];
-  if(currentTaskIndex<taskList.length){
-    taskArea.textContent=taskList[currentTaskIndex];
-  }
-  // Progress
-  const progress=(currentTaskIndex+1)/taskList.length*100;
-  document.getElementById('progressFill').style.width=`${progress}%`;
+  taskArea.innerHTML=`<h3>${taskArray[currentTaskIndex]}</h3>`;
+  const progress=((currentTaskIndex+1)/taskArray.length)*100;
+  document.getElementById('progressFill').style.width=progress+'%';
 }
 
-// Nächste Aufgabe
 function nextTask(){
-  const tpName=topics[currentTopicIndex];
-  const taskList=tasks[currentClass][currentSubject][tpName];
-  if(currentTaskIndex<taskList.length-1){
-    currentTaskIndex++;
-    loadTask();
-  } else {
-    alert('Thema abgeschlossen!');
-  }
+  const taskArray=tasks[currentSubject][currentClass][currentTopic];
+  if(currentTaskIndex<taskArray.length-1){currentTaskIndex++;showTask();}
+  else alert("Alle Aufgaben erledigt!");
 }
-
-// Französisch Extra
-function loadFrenchExtra(){}
-
-// Vokabeltrainer & Lernkarten (Placeholder)
-function showVocab(){ alert('Vokabeltrainer noch nicht implementiert'); }
-function showFlashcards(){ alert('Lernkarten noch nicht implementiert'); }
-
-showScreen('menuScreen');
 </script>
-
 </body>
 </html>
