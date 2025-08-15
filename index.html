@@ -5,19 +5,70 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GGLernen Vokabeltrainer</title>
 <style>
-body{font-family:Arial,sans-serif;background:#f0f4f8;color:#333;padding:20px;}
-h1,h2{color:#2d3436;}
-section{background:#74b9ff;padding:20px;margin-bottom:20px;border-radius:15px;color:#fff;}
-input,button,select{padding:10px;margin:5px;border-radius:10px;border:none;font-size:1em;}
-button{background:#6c5ce7;color:white;cursor:pointer;transition:0.3s;}
-button:hover{background:#a29bfe;}
-.card-container{perspective:1000px;margin:20px 0;}
-.card{width:300px;height:180px;background:#fff;color:#000;display:flex;align-items:center;justify-content:center;border-radius:15px;text-align:center;font-size:1.3em;cursor:pointer;transition:0.6s;transform-style:preserve-3d;position:relative;}
+body{
+  font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(to right, #74b9ff, #a29bfe);
+  color:#333;
+  padding:20px;
+  margin:0;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  transition: background 1s;
+}
+h1,h2{color:#fff;text-shadow:1px 1px 5px rgba(0,0,0,0.3);}
+section{
+  background:rgba(255,255,255,0.1);
+  padding:20px;
+  margin:10px;
+  border-radius:20px;
+  width:90%;
+  max-width:700px;
+  backdrop-filter: blur(10px);
+  box-shadow:0 8px 20px rgba(0,0,0,0.2);
+  transition: transform 0.3s;
+}
+section:hover{transform:scale(1.02);}
+input,button,select{
+  padding:10px;
+  margin:5px;
+  border-radius:10px;
+  border:none;
+  font-size:1em;
+  outline:none;
+}
+button{
+  background:#6c5ce7;
+  color:white;
+  cursor:pointer;
+  transition:0.3s;
+  box-shadow:0 5px 15px rgba(0,0,0,0.2);
+}
+button:hover{background:#a29bfe;transform:scale(1.05);}
+.card-container{
+  perspective:1000px;
+  margin:20px 0;
+}
+.card{
+  width:300px;height:180px;
+  background:#fff;color:#000;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:15px;text-align:center;font-size:1.3em;
+  cursor:pointer;transition:0.6s;transform-style:preserve-3d;position:relative;
+  box-shadow:0 10px 30px rgba(0,0,0,0.3);
+}
 .card.flipped{transform:rotateY(180deg);}
-.card .front,.card .back{position:absolute;width:100%;height:100%;backface-visibility:hidden;display:flex;align-items:center;justify-content:center;border-radius:15px;}
+.card .front,.card .back{
+  position:absolute;width:100%;height:100%;
+  backface-visibility:hidden;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:15px;
+}
 .card .back{transform:rotateY(180deg);background:#ffeaa7;}
-.progress{margin-top:10px;font-size:0.9em;}
-.level{margin-top:10px;font-weight:bold;}
+.progress, .level, .streak{margin-top:10px;font-size:0.9em;color:#fff;text-shadow:1px 1px 3px rgba(0,0,0,0.3);}
+.vocab-item{transition:0.3s;}
+.vocab-item:hover{transform:scale(1.02);}
 </style>
 </head>
 <body>
@@ -58,16 +109,22 @@ button:hover{background:#a29bfe;}
   </div>
   <div class="progress" id="progress"></div>
   <div class="level" id="levelDisplay"></div>
+  <div class="streak" id="streakDisplay"></div>
 </section>
 
 <script>
 // --- Account ---
 let username = localStorage.getItem('username') || '';
 document.getElementById('usernameInput').value=username;
+let streak = JSON.parse(localStorage.getItem('streak')) || 0;
+
 function saveUsername(){
   username=document.getElementById('usernameInput').value.trim();
   localStorage.setItem('username',username);
-  document.getElementById('accountInfo').innerText='Name: '+username;
+  updateAccountInfo();
+}
+function updateAccountInfo(){
+  document.getElementById('accountInfo').innerHTML=`<strong>Name:</strong> ${username}<br><strong>Streak:</strong> ${streak} Tage`;
 }
 
 // --- Ordner ---
@@ -153,6 +210,9 @@ function answer(isRight){
   nextCard();
   renderVocabList();
   updateProgress();
+  streak++; // Einfache Streak Logik
+  localStorage.setItem('streak',JSON.stringify(streak));
+  updateAccountInfo();
 }
 
 function nextCard(){
@@ -166,8 +226,9 @@ function renderVocabList(){
   container.innerHTML='';
   vocabList.forEach(v=>{
     const div=document.createElement('div');
+    div.className='vocab-item';
     let percent=Math.round((v.right/(v.right+v.wrong||1))*100);
-    div.innerText=`${v.front} - ${v.back} | Erfolg: ${percent}%`;
+    div.innerHTML=`${v.front} - ${v.back} | Erfolg: ${percent}% | Fehler: ${v.wrong}`;
     container.appendChild(div);
   });
 }
@@ -176,6 +237,7 @@ function updateProgress(){
   if(vocabList.length==0){
     document.getElementById('progress').innerText='Fortschritt: 0%';
     document.getElementById('levelDisplay').innerText='';
+    document.getElementById('streakDisplay').innerText='';
     return;
   }
   let total=vocabList.length;
@@ -183,11 +245,12 @@ function updateProgress(){
   let percent=Math.round((mastered/total)*100);
   document.getElementById('progress').innerText=`Fortschritt: ${percent}%`;
   document.getElementById('levelDisplay').innerText=`Level: ${Math.floor(percent/10)+1}`;
+  document.getElementById('streakDisplay').innerText=`Streak: ${streak} Tage`;
 }
 
 // --- Initial ---
 renderFolders();
-if(username) document.getElementById('accountInfo').innerText='Name: '+username;
+updateAccountInfo();
 </script>
 
 </body>
