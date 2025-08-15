@@ -3,139 +3,182 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dadish-Klon – 20 Level</title>
+<title>GGLernen</title>
 <style>
-  body { margin:0; font-family:sans-serif; background:#87ceeb; }
-  #menu, #game { display:none; text-align:center; padding-top:30px; }
-  button { padding:10px 20px; font-size:16px; margin:5px; cursor:pointer; }
-  canvas { display:block; margin:0 auto; background:#87ceeb; border:2px solid #000; }
+/* ======= Body ======= */
+body {
+  margin:0;
+  font-family:'Arial', sans-serif;
+  background: linear-gradient(135deg,#74b9ff,#a29bfe);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
+  height:100vh;
+  overflow:hidden;
+}
+
+/* ======= Screens ======= */
+.screen { display:none; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100vh; transition:opacity 0.5s; }
+.active { display:flex; opacity:1; }
+
+/* ======= Headings ======= */
+h1,h2,h3 { color:#fff; text-align:center; margin:10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+
+/* ======= Input ======= */
+input { padding:10px; font-size:16px; border-radius:8px; border:none; margin:10px 0; width:220px; text-align:center; }
+
+/* ======= Buttons ======= */
+button { padding:10px 25px; margin:10px; border:none; border-radius:12px; cursor:pointer; transition: transform 0.2s, background 0.3s; font-weight:bold; color:white; font-size:16px; }
+button:hover { transform:scale(1.05); filter:brightness(1.2); }
+
+/* ======= Button Colors ======= */
+#menuScreen button { background:#6c5ce7; }
+#subjectScreen button { background:#00b894; }
+#exerciseScreen button { background:#fd79a8; }
+
+/* ======= Progress Bar ======= */
+#progressBar { width:80%; height:25px; background:rgba(255,255,255,0.3); border-radius:12px; margin:20px 0; overflow:hidden; }
+#progressFill { height:100%; width:0%; background:#ffeaa7; border-radius:12px; transition: width 0.5s ease; }
+
+/* ======= Exercise Container ======= */
+#exerciseContainer { text-align:center; margin:20px; color:white; }
+
+/* ======= Logo ======= */
+#logo {
+  font-size:50px;
+  font-weight:bold;
+  color:white;
+  text-shadow: 3px 3px 8px rgba(0,0,0,0.4);
+  margin-bottom:30px;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+}
+
+/* ======= Credits ======= */
+#credits { position:fixed; bottom:10px; font-size:14px; color:white; text-shadow:1px 1px 2px rgba(0,0,0,0.4); }
 </style>
 </head>
 <body>
 
-<div id="menu">
-  <h1>Mein Dadish-Klon</h1>
-  <div id="levelButtons"></div>
+<!-- Logo -->
+<div id="logo">GGLernen</div>
+
+<!-- Start Screen -->
+<div id="startScreen" class="screen active">
+<h1>Willkommen zu GGLernen!</h1>
+<input type="text" id="userName" placeholder="Dein Name">
+<button onclick="startApp()">Start</button>
 </div>
 
-<div id="game">
-  <canvas id="gameCanvas" width="800" height="400"></canvas>
-  <p id="story"></p>
-  <button onclick="showMenu()">Zurück zum Menü</button>
+<!-- Subject Selection -->
+<div id="subjectScreen" class="screen">
+<h2>Hallo <span id="displayName"></span>! Wähle ein Fach:</h2>
+<button onclick="selectSubject('französisch')">Französisch</button>
+<button onclick="selectSubject('mathe')">Mathe</button>
+<button onclick="selectSubject('deutsch')">Deutsch</button>
 </div>
 
-<script src="game.js"></script>
+<!-- Exercise Screen -->
+<div id="exerciseScreen" class="screen">
+<h2 id="subjectTitle"></h2>
+<div id="exerciseContainer"></div>
+<button onclick="nextExercise()">Nächste Aufgabe</button>
+<div id="progressBar"><div id="progressFill"></div></div>
+<button onclick="goToSubjects()">Zurück zu Fächern</button>
+</div>
+
+<!-- Credits -->
+<div id="credits">Made by Peter Beulker</div>
+
 <script>
-const menu = document.getElementById('menu');
-const game = document.getElementById('game');
-const levelButtonsDiv = document.getElementById('levelButtons');
+// ======== Variablen ========
+let userName = '';
+let subject = '';
+let level = 0;
+let exercises = [];
+let progress = 0;
 
-for(let i=1;i<=20;i++){
-  let btn = document.createElement('button');
-  btn.textContent = 'Level '+i;
-  btn.onclick = ()=>startGame(i);
-  levelButtonsDiv.appendChild(btn);
+// Beispiel-Übungen pro Fach
+const exerciseData = {
+  französisch:[
+    {question:"Übersetze: Haus", answer:"maison"},
+    {question:"Übersetze: Apfel", answer:"pomme"},
+    {question:"Übersetze: Freund", answer:"ami"}
+  ],
+  mathe:[
+    {question:"5 + 3 = ?", answer:"8"},
+    {question:"10 - 4 = ?", answer:"6"},
+    {question:"7 * 2 = ?", answer:"14"}
+  ],
+  deutsch:[
+    {question:"Synonym für schnell", answer:"rasch"},
+    {question:"Gegenteil von laut", answer:"leise"},
+    {question:"Plural von Kind", answer:"kinder"}
+  ]
+};
+
+// ======== Funktionen ========
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
 }
 
-function showMenu(){
-  game.style.display='none';
-  menu.style.display='block';
+function startApp(){
+  const nameInput = document.getElementById('userName').value.trim();
+  if(nameInput===''){ alert("Bitte Namen eingeben!"); return; }
+  userName = nameInput;
+  document.getElementById('displayName').textContent = userName;
+  localStorage.setItem('gglernenName', userName);
+  showScreen('subjectScreen');
 }
-function startGame(level){
-  menu.style.display='none';
-  game.style.display='block';
-  initGame(level);
+
+function selectSubject(sub){
+  subject = sub;
+  level = parseInt(localStorage.getItem(subject+'Level')) || 0;
+  exercises = exerciseData[subject];
+  showScreen('exerciseScreen');
+  document.getElementById('subjectTitle').textContent = subject.charAt(0).toUpperCase()+subject.slice(1);
+  progress = (level/exercises.length)*100;
+  updateProgress();
+  showExercise();
 }
-menu.style.display='block';
+
+function showExercise(){
+  if(level >= exercises.length){
+    document.getElementById('exerciseContainer').innerHTML = "<h3>🎉 Alle Übungen abgeschlossen! 🎉</h3>";
+    return;
+  }
+  const ex = exercises[level];
+  document.getElementById('exerciseContainer').innerHTML = `
+  <h3>${ex.question}</h3>
+  <input type="text" id="answerInput" placeholder="Antwort">
+  <button onclick="checkAnswer()">Antwort prüfen</button>`;
+}
+
+function checkAnswer(){
+  const answer = document.getElementById('answerInput').value.trim().toLowerCase();
+  const correct = exercises[level].answer.toLowerCase();
+  if(answer===correct){
+    alert("✅ Richtig!");
+    level++;
+    localStorage.setItem(subject+'Level', level);
+    progress = (level/exercises.length)*100;
+    updateProgress();
+    showExercise();
+  } else{
+    alert("❌ Falsch, versuche es erneut!");
+  }
+}
+
+function nextExercise(){ showExercise(); }
+function updateProgress(){ document.getElementById('progressFill').style.width = progress+"%"; }
+function goToSubjects(){ showScreen('subjectScreen'); }
 </script>
 
 </body>
 </html>
-let canvas = document.getElementById('gameCanvas');
-let ctx = canvas.getContext('2d');
-
-let player = { x:50, y:300, width:30, height:30, dy:0, onGround:true };
-let keys = {};
-let level = 1;
-
-// Level-Daten
-const levels = [];
-for(let i=1;i<=20;i++){
-  levels.push({
-    story: `Level ${i}: Dein Abenteuer geht weiter!`,
-    platforms: [
-      {x:0,y:330,width:800,height:70},
-      {x:150+i*5, y:250, width:100, height:20},
-      {x:350+i*5, y:200, width:100, height:20}
-    ],
-    collectibles: [
-      {x:180+i*5, y:220, width:20, height:20},
-      {x:380+i*5, y:170, width:20, height:20}
-    ]
-  });
-}
-
-document.addEventListener('keydown', e => keys[e.key]=true);
-document.addEventListener('keyup', e => keys[e.key]=false);
-
-function initGame(lvl){
-  level = lvl;
-  player.x = 50; player.y = 300; player.dy=0; player.onGround=true;
-  document.getElementById('story').textContent = levels[level-1].story;
-  gameLoop();
-}
-
-function gameLoop(){
-  update();
-  draw();
-  requestAnimationFrame(gameLoop);
-}
-
-function update(){
-  // Gravity
-  if(!player.onGround) player.dy += 0.8;
-  player.y += player.dy;
-
-  // Boden & Plattformen
-  player.onGround = false;
-  levels[level-1].platforms.forEach(p=>{
-    if(player.x+player.width > p.x && player.x < p.x+p.width && player.y+player.height >= p.y && player.y+player.height <= p.y+10){
-      player.y = p.y - player.height;
-      player.dy = 0;
-      player.onGround = true;
-    }
-  });
-
-  // Bewegung
-  if(keys['ArrowRight']) player.x +=5;
-  if(keys['ArrowLeft']) player.x -=5;
-  if(keys['ArrowUp'] && player.onGround){ player.dy=-15; player.onGround=false; }
-
-  // Sammelobjekte
-  levels[level-1].collectibles = levels[level-1].collectibles.filter(c=>{
-    if(player.x+player.width > c.x && player.x < c.x+c.width && player.y+player.height > c.y && player.y < c.y+c.height){
-      return false; // gesammelt
-    }
-    return true;
-  });
-}
-
-function draw(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  // Hintergrund
-  ctx.fillStyle = "#87ceeb";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
-
-  // Plattformen
-  ctx.fillStyle="#654321";
-  levels[level-1].platforms.forEach(p=> ctx.fillRect(p.x,p.y,p.width,p.height));
-
-  // Sammelobjekte
-  ctx.fillStyle="#ff0";
-  levels[level-1].collectibles.forEach(c=> ctx.fillRect(c.x,c.y,c.width,c.height));
-
-  // Spieler
-  ctx.fillStyle="#ff0000";
-  ctx.fillRect(player.x,player.y,player.width,player.height);
-}
