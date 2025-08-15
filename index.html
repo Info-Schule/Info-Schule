@@ -5,111 +5,102 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GGLernen Vokabeltrainer</title>
 <style>
-body {
+body{
   margin:0;
-  font-family:'Arial', sans-serif;
-  background: linear-gradient(135deg,#81ecec,#6c5ce7);
+  font-family:'Arial',sans-serif;
+  background:linear-gradient(135deg,#74b9ff,#a29bfe);
   display:flex;
   flex-direction:column;
   align-items:center;
   min-height:100vh;
   padding:20px;
 }
-
-#logo {
+#logo{
   font-size:48px;
   font-weight:bold;
   color:#fff;
   text-shadow:2px 2px 6px rgba(0,0,0,0.4);
   margin-bottom:20px;
-  animation: pulse 2s infinite;
+  animation:pulse 2s infinite;
 }
-@keyframes pulse {
+@keyframes pulse{
   0%{transform:scale(1);}
   50%{transform:scale(1.05);}
   100%{transform:scale(1);}
 }
-
-#folderSection, #trainerSection {
+section{
   background: rgba(255,255,255,0.1);
   padding:20px;
   border-radius:20px;
   width:90%;
-  max-width:600px;
+  max-width:700px;
   margin-bottom:20px;
 }
-
-#folderSection input {
+input,button{
   padding:10px;
   border-radius:10px;
   border:none;
-  margin-right:10px;
-}
-button {
-  padding:10px 20px;
-  border:none;
-  border-radius:12px;
-  background:#6c5ce7;
-  color:white;
-  font-weight:bold;
-  cursor:pointer;
   margin:5px;
-  transition:0.3s;
 }
-button:hover {background:#a29bfe;}
-
-.card {
-  background:#fff;
-  border-radius:15px;
-  padding:40px;
-  margin:20px 0;
-  font-size:32px;
-  cursor:pointer;
-  min-height:120px;
+button{
+  background:#6c5ce7;color:white;font-weight:bold;cursor:pointer;transition:0.3s;
+}
+button:hover{background:#a29bfe;}
+.card{
+  background:#fff;border-radius:15px;padding:40px;margin:20px 0;font-size:32px;
+  cursor:pointer;min-height:120px;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 12px rgba(0,0,0,0.3);transition: transform 0.6s;
+  perspective:1000px;
+}
+.cardInner{
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+  width:100%;
+  height:100%;
   display:flex;
   align-items:center;
   justify-content:center;
-  box-shadow:0 4px 12px rgba(0,0,0,0.3);
-  transition: transform 0.6s;
 }
-.card.flipped {transform: rotateY(180deg);}
-.progressBar {
-  width:100%;
-  height:20px;
-  background:rgba(255,255,255,0.3);
-  border-radius:10px;
-  overflow:hidden;
-  margin:15px 0;
+.card.flipped .cardInner{transform:rotateY(180deg);}
+.cardFront,.cardBack{
+  position:absolute;
+  backface-visibility:hidden;
 }
-.progressFill {
-  width:0%;
-  height:100%;
-  background:#ffeaa7;
-  border-radius:10px;
-  transition: width 0.5s;
-}
-#stats {
-  font-size:18px;
-  color:#fff;
-  text-shadow:1px 1px 2px rgba(0,0,0,0.4);
-  margin-top:10px;
-}
+.cardBack{transform:rotateY(180deg);}
+.progressBar{width:100%;height:20px;background:rgba(255,255,255,0.3);border-radius:10px;overflow:hidden;margin:15px 0;}
+.progressFill{width:0%;height:100%;background:#ffeaa7;border-radius:10px;transition: width 0.5s;}
+.vocabList{max-height:200px;overflow-y:auto;margin-top:10px;}
+.vocabItem{display:flex;justify-content:space-between;padding:5px 10px;border-bottom:1px solid rgba(255,255,255,0.2);border-radius:5px;margin-bottom:5px;background:rgba(255,255,255,0.2);}
+.vocabScore{font-weight:bold;}
+#stats,#accountInfo{color:#fff;text-shadow:1px 1px 2px rgba(0,0,0,0.4);}
 </style>
 </head>
 <body>
 
 <div id="logo">GGLernen Vokabeltrainer</div>
 
-<div id="folderSection">
+<section id="accountSection">
+  <h2>Konto</h2>
+  <input type="text" id="usernameInput" placeholder="Dein Name">
+  <button onclick="saveUsername()">Speichern</button>
+  <div id="accountInfo"></div>
+</section>
+
+<section id="folderSection">
   <h2>Ordner</h2>
   <input type="text" id="newFolderName" placeholder="Neuen Ordner erstellen">
   <button onclick="createFolder()">Erstellen</button>
   <div id="folderList"></div>
-</div>
+</section>
 
-<div id="trainerSection" style="display:none;">
+<section id="trainerSection" style="display:none;">
   <h2 id="folderTitle"></h2>
-  <div class="card" id="card">Klicke zum Drehen</div>
+  <div class="card" id="card">
+    <div class="cardInner">
+      <div class="cardFront"></div>
+      <div class="cardBack"></div>
+    </div>
+  </div>
   <button onclick="answer(true)">Richtig</button>
   <button onclick="answer(false)">Falsch</button>
   <div class="progressBar"><div class="progressFill" id="progressFill"></div></div>
@@ -118,29 +109,46 @@ button:hover {background:#a29bfe;}
   <input type="text" id="frontInput" placeholder="Französisch">
   <input type="text" id="backInput" placeholder="Deutsch">
   <button onclick="addVocab()">Hinzufügen</button>
-</div>
+  <h3>Vokabelliste</h3>
+  <div class="vocabList" id="vocabList"></div>
+</section>
 
 <script>
-// --- Storage Management ---
+// --- Storage & Account ---
+let username = localStorage.getItem('username') || '';
+document.getElementById('usernameInput').value=username;
 let folders = JSON.parse(localStorage.getItem('folders')) || {};
-let currentFolder = '';
-let vocabList = [];
-let currentIndex = 0;
+let currentFolder='';
+let vocabList=[];
+let currentIndex=0;
+let levelData = JSON.parse(localStorage.getItem('levelData')) || {xp:0,level:1,streak:0};
 
-// --- Folder Functions ---
+// --- Account ---
+function saveUsername(){
+  username=document.getElementById('usernameInput').value.trim();
+  localStorage.setItem('username',username);
+  renderAccount();
+}
+function renderAccount(){
+  document.getElementById('accountInfo').innerText=
+    `Name: ${username || '-'} | Level: ${levelData.level} | XP: ${levelData.xp} | Streak: ${levelData.streak}`;
+}
+renderAccount();
+
+// --- Folder ---
 function saveFolders(){localStorage.setItem('folders',JSON.stringify(folders));}
 function renderFolders(){
   const list = document.getElementById('folderList');
   list.innerHTML='';
   for(let name in folders){
-    let btn = document.createElement('button');
-    btn.innerText = name;
-    btn.onclick = ()=>{openFolder(name)};
+    let btn=document.createElement('button');
+    btn.innerText=name;
+    btn.onclick=()=>{openFolder(name)};
     list.appendChild(btn);
   }
 }
 function createFolder(){
-  let name = document.getElementById('newFolderName').value.trim();
+  let name=document.getElementById('newFolderName').value.trim();
   if(name && !folders[name]){
     folders[name]=[];
     saveFolders();
@@ -149,7 +157,7 @@ function createFolder(){
   } else alert('Ordner existiert bereits oder Name leer.');
 }
 
-// --- Trainer Functions ---
+// --- Trainer ---
 function openFolder(name){
   currentFolder=name;
   vocabList=folders[name];
@@ -157,52 +165,54 @@ function openFolder(name){
   document.getElementById('trainerSection').style.display='block';
   document.getElementById('folderTitle').innerText=name;
   showCard();
+  renderVocabList();
   updateProgress();
 }
 
 function showCard(){
-  if(vocabList.length==0){document.getElementById('card').innerText="Keine Vokabeln"; return;}
-  const card = document.getElementById('card');
-  card.innerText=vocabList[currentIndex].front;
-  card.classList.remove('flipped');
+  if(vocabList.length==0){document.querySelector('.cardFront').innerText="Keine Vokabeln";document.querySelector('.cardBack').innerText="";return;}
+  document.querySelector('.cardFront').innerText=vocabList[currentIndex].front;
+  document.querySelector('.cardBack').innerText=vocabList[currentIndex].back;
 }
 document.getElementById('card').addEventListener('click',()=>{
-  const card=document.getElementById('card');
-  card.innerText=vocabList[currentIndex].back;
-  card.classList.add('flipped');
+  document.getElementById('card').classList.toggle('flipped');
 });
 
 function answer(correct){
   if(vocabList.length==0) return;
   if(correct){
-    vocabList[currentIndex].score = (vocabList[currentIndex].score || 0)+1;
+    vocabList[currentIndex].score=(vocabList[currentIndex].score||0)+1;
+    levelData.xp+=10;
+    levelData.streak++;
   } else {
-    vocabList[currentIndex].score = (vocabList[currentIndex].score || 0)-1;
+    vocabList[currentIndex].score=(vocabList[currentIndex].score||0)-1;
+    levelData.streak=0;
   }
+  if(levelData.xp>=levelData.level*100){levelData.xp=0;levelData.level++;alert('Level Up!');}
   currentIndex++;
   if(currentIndex>=vocabList.length){
-    // Wiederholung: zuerst Vokabeln mit niedrigem Score
     vocabList.sort((a,b)=> (a.score||0)-(b.score||0));
     currentIndex=0;
   }
   folders[currentFolder]=vocabList;
   saveFolders();
+  localStorage.setItem('levelData',JSON.stringify(levelData));
   showCard();
   updateProgress();
+  renderVocabList();
+  renderAccount();
 }
 
 function updateProgress(){
   if(vocabList.length==0) return;
-  const fill=document.getElementById('progressFill');
-  fill.style.width=((currentIndex/vocabList.length)*100)+'%';
-  const stats=document.getElementById('stats');
+  document.getElementById('progressFill').style.width=((currentIndex/vocabList.length)*100)+'%';
   const hard = vocabList.filter(v=> (v.score||0)<1).length;
-  stats.innerText=`Vokabeln übrig: ${vocabList.length-currentIndex} | Noch trainieren: ${hard}`;
+  document.getElementById('stats').innerText=`Vokabeln übrig: ${vocabList.length-currentIndex} | Noch trainieren: ${hard}`;
 }
 
 function addVocab(){
-  const front = document.getElementById('frontInput').value.trim();
-  const back = document.getElementById('backInput').value.trim();
+  const front=document.getElementById('frontInput').value.trim();
+  const back=document.getElementById('backInput').value.trim();
   if(front && back){
     vocabList.push({front,back,score:0});
     folders[currentFolder]=vocabList;
@@ -211,12 +221,20 @@ function addVocab(){
     document.getElementById('backInput').value='';
     showCard();
     updateProgress();
+    renderVocabList();
   } else alert("Beide Felder ausfüllen!");
 }
 
-// --- Initial Render ---
-renderFolders();
-</script>
+function renderVocabList(){
+  const container=document.getElementById('vocabList');
+  container.innerHTML='';
+  vocabList.forEach(v=>{
+    const div=document.createElement('div');
+    div.className='vocabItem';
+    div.innerHTML=`<span>${v.front} - ${v.back}</span><span class="vocabScore">${v.score||0}</span>`;
+    container.appendChild(div);
+  });
+}
 
-</body>
-</html>
+// --- Initial ---
+renderFolders();
