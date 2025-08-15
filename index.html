@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Automatische Präsentation</title>
+<title>KI-Präsentation</title>
 <style>
   body, html {margin:0; padding:0; font-family:sans-serif; background:#061425; color:#fff;}
   .slide {display:none; padding:40px; min-height:100vh; box-sizing:border-box;}
@@ -21,7 +21,7 @@
 <body>
 
 <div id="inputSection">
-  <h1>Automatische Präsentation</h1>
+  <h1>Automatische KI-Präsentation</h1>
   <input type="text" id="topic" placeholder="Thema eingeben">
   <button id="generateBtn">Generieren</button>
 </div>
@@ -49,29 +49,54 @@ function showSlide(index){
 prevBtn.onclick = () => showSlide(currentSlide -1);
 nextBtn.onclick = () => showSlide(currentSlide +1);
 
+// OpenAI-API-Key hier einfügen
+const OPENAI_API_KEY = "DEIN_API_KEY_HIER";
+
 document.getElementById('generateBtn').onclick = async () => {
   const topic = document.getElementById('topic').value.trim();
   if(!topic) return alert('Bitte ein Thema eingeben.');
 
-  // einfache automatische Slides
-  const slidesData = [
-    {title:`Einführung in ${topic}`, text:`Hier lernst du die wichtigsten Fakten über ${topic}.`},
-    {title:`Geschichte / Hintergrund`, text:`Wichtige historische Fakten zu ${topic}.`},
-    {title:`Hauptpunkte`, text:`Liste der zentralen Aspekte von ${topic}.`},
-    {title:`Bilder und Beispiele`, text:`Ein paar visuelle Beispiele zu ${topic}.`},
-    {title:`Fazit`, text:`Zusammenfassung und wichtige Erkenntnisse.`}
-  ];
+  document.getElementById('inputSection').style.display = 'none';
+  presentation.innerHTML = `<p>Lade Präsentation für "${topic}"… bitte warten.</p>`;
 
+  const slidesTitles = ["Einführung", "Hintergrund / Geschichte", "Hauptpunkte", "Bilder & Beispiele", "Fazit"];
+  const slidesData = [];
+
+  for(let title of slidesTitles){
+    // KI-Text generieren
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          {role:"system", content:"Du generierst kurze Präsentationstexte für Folien."},
+          {role:"user", content:`Schreibe einen kurzen, verständlichen Text für die Folie "${title}" über das Thema "${topic}" (maximal 100 Wörter).`}
+        ],
+        max_tokens: 200
+      })
+    });
+    const data = await response.json();
+    const text = data.choices[0].message.content;
+
+    // Bild über Unsplash
+    const imageUrl = `https://source.unsplash.com/800x400/?${encodeURIComponent(topic)}&sig=${Math.floor(Math.random()*1000)}`;
+
+    slidesData.push({title, text, imageUrl});
+  }
+
+  // Slides erstellen
   presentation.innerHTML = '';
   for(let slide of slidesData){
     const div = document.createElement('div');
     div.className = 'slide';
-    div.innerHTML = `<h1>${slide.title}</h1><p>${slide.text}</p>
-      <img src="https://source.unsplash.com/800x400/?${encodeURIComponent(topic)}&sig=${Math.floor(Math.random()*1000)}" alt="${topic}">`;
+    div.innerHTML = `<h1>${slide.title}</h1><p>${slide.text}</p><img src="${slide.imageUrl}" alt="${topic}">`;
     presentation.appendChild(div);
   }
 
-  document.getElementById('inputSection').style.display = 'none';
   showSlide(0);
 };
 </script>
