@@ -6,151 +6,216 @@
 <title>GGLernen Vokabeltrainer</title>
 <style>
 body {
-  font-family: 'Arial', sans-serif;
-  background: linear-gradient(135deg,#74b9ff,#a29bfe);
+  margin:0;
+  font-family:'Arial', sans-serif;
+  background: linear-gradient(135deg,#81ecec,#6c5ce7);
   display:flex;
   flex-direction:column;
   align-items:center;
   min-height:100vh;
-  margin:0;
   padding:20px;
 }
+
 #logo {
   font-size:48px;
   font-weight:bold;
   color:#fff;
+  text-shadow:2px 2px 6px rgba(0,0,0,0.4);
   margin-bottom:20px;
-  text-shadow:2px 2px 6px rgba(0,0,0,0.3);
+  animation: pulse 2s infinite;
 }
-#menu {
-  display:flex;
-  gap:15px;
+@keyframes pulse {
+  0%{transform:scale(1);}
+  50%{transform:scale(1.05);}
+  100%{transform:scale(1);}
+}
+
+#folderSection, #trainerSection {
+  background: rgba(255,255,255,0.1);
+  padding:20px;
+  border-radius:20px;
+  width:90%;
+  max-width:600px;
   margin-bottom:20px;
 }
-button.folderBtn {
+
+#folderSection input {
+  padding:10px;
+  border-radius:10px;
+  border:none;
+  margin-right:10px;
+}
+button {
   padding:10px 20px;
   border:none;
   border-radius:12px;
   background:#6c5ce7;
   color:white;
+  font-weight:bold;
   cursor:pointer;
+  margin:5px;
   transition:0.3s;
 }
-button.folderBtn:hover {background:#a29bfe;}
-#trainer {
-  background:rgba(255,255,255,0.1);
-  padding:20px;
-  border-radius:20px;
-  width:90%;
-  max-width:500px;
-  text-align:center;
-}
+button:hover {background:#a29bfe;}
+
 .card {
   background:#fff;
   border-radius:15px;
-  padding:20px;
+  padding:40px;
   margin:20px 0;
-  font-size:24px;
+  font-size:32px;
   cursor:pointer;
-  transition: transform 0.6s;
-  perspective:1000px;
-  min-height:80px;
+  min-height:120px;
   display:flex;
   align-items:center;
   justify-content:center;
-  box-shadow:0 4px 10px rgba(0,0,0,0.2);
+  box-shadow:0 4px 12px rgba(0,0,0,0.3);
+  transition: transform 0.6s;
 }
-.card.flipped {transform:rotateY(180deg);}
-#progressBar {width:100%; height:20px; background:rgba(255,255,255,0.3); border-radius:10px; overflow:hidden;}
-#progressFill {width:0%; height:100%; background:#ffeaa7; border-radius:10px; transition:width 0.5s;}
-#score {font-size:20px; color:#fff; text-shadow:1px 1px 2px rgba(0,0,0,0.4);}
+.card.flipped {transform: rotateY(180deg);}
+.progressBar {
+  width:100%;
+  height:20px;
+  background:rgba(255,255,255,0.3);
+  border-radius:10px;
+  overflow:hidden;
+  margin:15px 0;
+}
+.progressFill {
+  width:0%;
+  height:100%;
+  background:#ffeaa7;
+  border-radius:10px;
+  transition: width 0.5s;
+}
+#stats {
+  font-size:18px;
+  color:#fff;
+  text-shadow:1px 1px 2px rgba(0,0,0,0.4);
+  margin-top:10px;
+}
 </style>
 </head>
 <body>
 
 <div id="logo">GGLernen Vokabeltrainer</div>
 
-<div id="menu">
-  <button class="folderBtn" onclick="chooseFolder('alltag')">Französisch Alltag</button>
-  <button class="folderBtn" onclick="chooseFolder('schule')">Französisch Schule</button>
-  <button class="folderBtn" onclick="chooseFolder('mathe')">Mathe Begriffe</button>
+<div id="folderSection">
+  <h2>Ordner</h2>
+  <input type="text" id="newFolderName" placeholder="Neuen Ordner erstellen">
+  <button onclick="createFolder()">Erstellen</button>
+  <div id="folderList"></div>
 </div>
 
-<div id="trainer">
-  <div id="score">Score: 0</div>
+<div id="trainerSection" style="display:none;">
+  <h2 id="folderTitle"></h2>
   <div class="card" id="card">Klicke zum Drehen</div>
-  <button onclick="checkAnswer(true)">Richtig</button>
-  <button onclick="checkAnswer(false)">Falsch</button>
-  <div id="progressBar"><div id="progressFill"></div></div>
-  <input type="file" id="photoInput" accept="image/*" />
+  <button onclick="answer(true)">Richtig</button>
+  <button onclick="answer(false)">Falsch</button>
+  <div class="progressBar"><div class="progressFill" id="progressFill"></div></div>
+  <div id="stats"></div>
+  <h3>Neue Vokabel hinzufügen</h3>
+  <input type="text" id="frontInput" placeholder="Französisch">
+  <input type="text" id="backInput" placeholder="Deutsch">
+  <button onclick="addVocab()">Hinzufügen</button>
 </div>
 
 <script>
-let vocabFolders = {
-  alltag: [
-    {fr:"maison", de:"Haus"},
-    {fr:"chien", de:"Hund"},
-    {fr:"chat", de:"Katze"}
-  ],
-  schule: [
-    {fr:"stylo", de:"Stift"},
-    {fr:"livre", de:"Buch"},
-    {fr:"bureau", de:"Schreibtisch"}
-  ],
-  mathe: [
-    {fr:"addition", de:"Addition"},
-    {fr:"soustraction", de:"Subtraktion"},
-    {fr:"multiplication", de:"Multiplikation"}
-  ]
-};
-
-let currentVocab = [];
+// --- Storage Management ---
+let folders = JSON.parse(localStorage.getItem('folders')) || {};
+let currentFolder = '';
+let vocabList = [];
 let currentIndex = 0;
-let score = 0;
 
-function chooseFolder(folder) {
-  currentVocab = [...vocabFolders[folder]];
-  currentIndex = 0;
-  score = 0;
-  updateScore();
+// --- Folder Functions ---
+function saveFolders(){localStorage.setItem('folders',JSON.stringify(folders));}
+function renderFolders(){
+  const list = document.getElementById('folderList');
+  list.innerHTML='';
+  for(let name in folders){
+    let btn = document.createElement('button');
+    btn.innerText = name;
+    btn.onclick = ()=>{openFolder(name)};
+    list.appendChild(btn);
+  }
+}
+function createFolder(){
+  let name = document.getElementById('newFolderName').value.trim();
+  if(name && !folders[name]){
+    folders[name]=[];
+    saveFolders();
+    renderFolders();
+    document.getElementById('newFolderName').value='';
+  } else alert('Ordner existiert bereits oder Name leer.');
+}
+
+// --- Trainer Functions ---
+function openFolder(name){
+  currentFolder=name;
+  vocabList=folders[name];
+  currentIndex=0;
+  document.getElementById('trainerSection').style.display='block';
+  document.getElementById('folderTitle').innerText=name;
   showCard();
   updateProgress();
 }
 
-function showCard() {
+function showCard(){
+  if(vocabList.length==0){document.getElementById('card').innerText="Keine Vokabeln"; return;}
   const card = document.getElementById('card');
-  card.innerText = currentVocab[currentIndex].fr;
+  card.innerText=vocabList[currentIndex].front;
   card.classList.remove('flipped');
 }
-
 document.getElementById('card').addEventListener('click',()=>{
-  const card = document.getElementById('card');
-  card.innerText = currentVocab[currentIndex].de;
+  const card=document.getElementById('card');
+  card.innerText=vocabList[currentIndex].back;
   card.classList.add('flipped');
 });
 
-function checkAnswer(correct){
-  if(correct){score++;}
+function answer(correct){
+  if(vocabList.length==0) return;
+  if(correct){
+    vocabList[currentIndex].score = (vocabList[currentIndex].score || 0)+1;
+  } else {
+    vocabList[currentIndex].score = (vocabList[currentIndex].score || 0)-1;
+  }
   currentIndex++;
-  if(currentIndex>=currentVocab.length){alert("Fertig! Score: "+score); currentIndex=0;}
-  updateScore();
+  if(currentIndex>=vocabList.length){
+    // Wiederholung: zuerst Vokabeln mit niedrigem Score
+    vocabList.sort((a,b)=> (a.score||0)-(b.score||0));
+    currentIndex=0;
+  }
+  folders[currentFolder]=vocabList;
+  saveFolders();
   showCard();
   updateProgress();
 }
 
-function updateScore(){document.getElementById('score').innerText="Score: "+score;}
 function updateProgress(){
-  const fill = document.getElementById('progressFill');
-  fill.style.width=((currentIndex/currentVocab.length)*100)+'%';
+  if(vocabList.length==0) return;
+  const fill=document.getElementById('progressFill');
+  fill.style.width=((currentIndex/vocabList.length)*100)+'%';
+  const stats=document.getElementById('stats');
+  const hard = vocabList.filter(v=> (v.score||0)<1).length;
+  stats.innerText=`Vokabeln übrig: ${vocabList.length-currentIndex} | Noch trainieren: ${hard}`;
 }
 
-// Foto Upload Funktion
-document.getElementById('photoInput').addEventListener('change',(e)=>{
-  const file = e.target.files[0];
-  if(file){
-    alert("Foto hochgeladen! (Hier könntest du OCR einbinden)");
-  }
-});
+function addVocab(){
+  const front = document.getElementById('frontInput').value.trim();
+  const back = document.getElementById('backInput').value.trim();
+  if(front && back){
+    vocabList.push({front,back,score:0});
+    folders[currentFolder]=vocabList;
+    saveFolders();
+    document.getElementById('frontInput').value='';
+    document.getElementById('backInput').value='';
+    showCard();
+    updateProgress();
+  } else alert("Beide Felder ausfüllen!");
+}
+
+// --- Initial Render ---
+renderFolders();
 </script>
 
 </body>
