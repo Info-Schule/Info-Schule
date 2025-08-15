@@ -1,756 +1,520 @@
 <!doctype html>
 <html lang="de">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover" />
-<title>Subway Runner -- Mobile</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Vokabeltrainer (Local)</title>
 <style>
-  :root{
-    --bg1:#061424; --bg2:#0b2138;
-    --panel:#053043cc; --glass-border:#25576e66;
-    --accent:#2ef0ff; --coin1:#fff5c2; --coin2:#ffd64a;
-    --playerTop:#ffe36b; --playerBot:#ffb62e;
-    --obs1:#ff5a60; --obs2:#d13b45;
-  }
-  html,body{height:100%;margin:0;background:linear-gradient(var(--bg1),var(--bg2));font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; -webkit-tap-highlight-color: transparent;}
-  #app{height:100vh;display:flex;align-items:center;justify-content:center;padding:10px;box-sizing:border-box}
-  canvas{width:100%;max-width:680px;height:calc(100vw*1.7);max-height:98vh;border-radius:18px;display:block;box-shadow:0 16px 40px #0009;background:transparent;touch-action:none}
-  /* HUD */
-  #topbar{position:fixed;left:12px;right:12px;top:12px;display:flex;justify-content:space-between;align-items:center;gap:8px;pointer-events:none}
-  .chip{pointer-events:auto;background:var(--panel);border:1px solid var(--glass-border);color:#eaf6ff;padding:8px 12px;border-radius:999px;font-weight:700;backdrop-filter:blur(6px)}
-  #centerMsg{position:fixed;inset:0;display:grid;place-items:center;pointer-events:none}
-  #centerMsg .card{pointer-events:auto;background:var(--panel);border:1px solid var(--glass-border);padding:18px 20px;border-radius:14px;text-align:center;backdrop-filter:blur(6px)}
-  #controls{position:fixed;left:0;right:0;bottom:12px;display:flex;justify-content:center;gap:10px;pointer-events:none}
-  .controlBtn{pointer-events:auto;background:#05212bdc;border:1px solid var(--glass-border);color:#eaf6ff;padding:12px 14px;border-radius:12px;font-weight:800;font-size:16px}
-  /* big touch target for mobile */
-  #leftBtn,#rightBtn,#jumpBtn,#slideBtn{width:68px;height:68px;border-radius:16px;display:flex;align-items:center;justify-content:center}
-  /* small helper: fullscreen prompt */
-  #fsPrompt{position:fixed;left:12px;bottom:12px;pointer-events:auto}
-  .mini{padding:8px 10px;font-size:14px;border-radius:10px}
-  @media(min-width:900px){
-    canvas{height:calc(min(680px,100vw)*1.2)}
-    #controls{bottom:22px}
-  }
+  :root{--bg:#0b1220;--card:#071427;--accent:#57d0ff;--muted:#9fb3c9;--good:#8ee08a;--bad:#ff7b7b}
+  html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background:linear-gradient(180deg,#02101a,#072231);color:#e6f6ff}
+  .wrap{max-width:980px;margin:18px auto;padding:14px;}
+  header{display:flex;gap:12px;align-items:center;justify-content:space-between}
+  header h1{margin:0;font-size:20px;letter-spacing:0.2px}
+  .row{display:flex;gap:12px;align-items:center}
+  .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.04);padding:12px;border-radius:12px}
+  .controls{display:flex;gap:8px;flex-wrap:wrap}
+  button{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--accent);padding:8px 10px;border-radius:8px;font-weight:700;cursor:pointer}
+  button.ghost{border:1px dashed rgba(255,255,255,0.03);color:var(--muted);font-weight:600}
+  input,textarea,select{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);padding:8px;border-radius:8px;color:#eaf6ff}
+  label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+  .grid{display:grid;grid-template-columns:1fr 360px;gap:14px;margin-top:14px}
+  @media(max-width:900px){ .grid{grid-template-columns:1fr} }
+  .list{max-height:60vh;overflow:auto;padding:8px;display:flex;flex-direction:column;gap:8px}
+  .item{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.02)}
+  .meta{font-size:13px;color:var(--muted)}
+  .badge{background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:999px;font-weight:700;color:var(--muted);font-size:12px}
+  .big{font-size:18px}
+  footer{margin-top:18px;color:var(--muted);font-size:13px}
+  .practiceArea{display:flex;flex-direction:column;gap:12px}
+  .card.center{display:grid;place-items:center;min-height:220px}
+  .answerBtns{display:flex;gap:8px;justify-content:center}
+  .correct{background:linear-gradient(90deg, rgba(34,170,84,0.22), rgba(34,170,84,0.1)); border-color: rgba(34,170,84,0.4); color:var(--good)}
+  .wrong{background:linear-gradient(90deg, rgba(220,80,80,0.16), rgba(220,80,80,0.06)); border-color: rgba(220,80,80,0.35); color:var(--bad)}
+  .small{font-size:13px;padding:6px 8px}
+  .muted{color:var(--muted)}
+  textarea{min-height:68px;resize:vertical}
+  .tag{background:#082532;padding:6px 8px;border-radius:999px;color:var(--muted);font-size:12px;margin-right:6px}
+  .controls .danger{color:#ff9aa2;border-color:rgba(255,255,255,0.03)}
+  .flex{display:flex;align-items:center;gap:8px}
+  .spaced{display:flex;justify-content:space-between;align-items:center}
 </style>
 </head>
 <body>
-  <div id="app">
-    <canvas id="game" width="360" height="612" aria-label="Endlos Runner Spiel"></canvas>
-  </div>
+  <div class="wrap">
+    <header>
+      <h1>Vokabeltrainer -- Local (Speichert im Browser)</h1>
+      <div class="row">
+        <div class="controls">
+          <button id="btnNew">➕ Neue Vokabel</button>
+          <button id="btnPractice">▶ Lernen</button>
+          <button id="btnExport">⬇ Export</button>
+          <button id="btnImport" class="ghost">⬆ Import</button>
+          <button id="btnReset" class="danger ghost">🗑️ Reset</button>
+        </div>
+      </div>
+    </header>
 
-  <div id="topbar">
-    <div class="chip">Score: <span id="score">0</span></div>
-    <div style="display:flex;gap:8px">
-      <div class="chip">Münzen: <span id="coins">0</span></div>
-      <div class="chip">Best: <span id="best">0</span></div>
-    </div>
-  </div>
+    <div class="grid">
+      <!-- Links: Liste & Add -->
+      <div>
+        <div class="card">
+          <div class="spaced">
+            <div>
+              <strong>Filter</strong>
+              <div class="muted">Suche / Tag / fällig</div>
+            </div>
+            <div class="flex">
+              <input id="search" placeholder="Suchen..." style="min-width:160px"/>
+              <select id="tagFilter">
+                <option value="">Alle Tags</option>
+              </select>
+              <label style="margin-left:6px"><input type="checkbox" id="onlyDue"/> Nur fällige</label>
+            </div>
+          </div>
+        </div>
 
-  <div id="centerMsg" hidden>
-    <div class="card">
-      <h2 id="title">Tippe zum Start</h2>
-      <p id="subtitle">Wischen: ← → • Hoch: Springen • Buttons: Alternate</p>
-      <div style="height:8px"></div>
-      <div style="display:flex;gap:8px;justify-content:center">
-        <button id="startBtn" class="controlBtn mini">Start</button>
-        <button id="fullscreenBtn" class="controlBtn mini">Vollbild</button>
+        <div class="card" style="margin-top:10px">
+          <strong>Vokabelliste</strong>
+          <div class="muted" style="font-size:13px;margin-top:6px">Klicke auf eine Vokabel zum bearbeiten oder auf ▶ um zu lernen.</div>
+          <div id="list" class="list" style="margin-top:10px"></div>
+        </div>
+      </div>
+
+      <!-- Rechts: Editor / Practice -->
+      <div>
+        <div id="editor" class="card">
+          <strong id="editorTitle">Neue Vokabel</strong>
+          <div style="margin-top:8px">
+            <label>Vorderseite (z.B. Deutsch)</label>
+            <input id="front" placeholder="z. B. Haus / der Hund" />
+            <label>Rückseite (z.B. Englisch)</label>
+            <input id="back" placeholder="z. B. house / dog" />
+            <label>Notiz (Beispiel, Aussprache)</label>
+            <textarea id="note" placeholder="z. B. Aussprache, Beispielsatz"></textarea>
+            <label>Tags (Komma getrennt)</label>
+            <input id="tags" placeholder="z. B. Reisen, Uni" />
+            <div style="margin-top:10px;display:flex;gap:8px">
+              <button id="saveBtn">Speichern</button>
+              <button id="newClear" class="ghost">Neu</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="practicePanel" class="card center" style="margin-top:12px;display:none">
+          <!-- Lernmodus UI -->
+          <div class="practiceArea" style="width:100%">
+            <div class="spaced">
+              <div>
+                <strong id="practiceModeTitle">Lernmodus</strong>
+                <div class="muted small" id="practiceMeta">--</div>
+              </div>
+              <div>
+                <button id="btnBackToList" class="ghost small">Zurück</button>
+              </div>
+            </div>
+
+            <div id="practiceCard" class="card center" style="min-height:160px;margin-top:8px">
+              <div id="cardFront" class="big">--</div>
+              <div id="cardNote" class="muted small" style="margin-top:8px"></div>
+            </div>
+
+            <div class="answerBtns">
+              <button id="showAnswer" class="small">Antwort zeigen</button>
+            </div>
+
+            <div id="answerArea" style="display:none;flex-direction:column;gap:8px">
+              <div class="card" id="theAnswer" style="text-align:center;font-size:18px"></div>
+              <div class="answerBtns">
+                <button id="btnCorrect" class="correct small">✔️ Korrekt</button>
+                <button id="btnWrong" class="wrong small">❌ Falsch</button>
+              </div>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;margin-top:6px">
+              <div class="muted small" id="progressInfo">--</div>
+              <div class="muted small" id="statsInfo">--</div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
+
+    <footer>
+      Tipp: Exportiere regelmäßig (Export) oder nutze Import um die Datei zu laden. Die Daten liegen lokal in deinem Browser (localStorage).
+    </footer>
   </div>
 
-  <div id="controls">
-    <div style="display:flex;gap:10px;pointer-events:none;align-items:center">
-      <button id="leftBtn" class="controlBtn" aria-label="Links">◀</button>
-      <button id="jumpBtn" class="controlBtn" aria-label="Springen">⬆</button>
-      <button id="rightBtn" class="controlBtn" aria-label="Rechts">▶</button>
-      <button id="slideBtn" class="controlBtn" aria-label="Rutschen">⤓</button>
-      <button id="pauseBtn" class="controlBtn" aria-label="Pause">⏯</button>
-    </div>
-  </div>
-
-  <div id="fsPrompt">
-    <button id="enableTilt" class="controlBtn mini">Tilt: Aus</button>
-  </div>
+  <input id="fileInput" type="file" accept="application/json" style="display:none" />
 
 <script>
-/* ===========================================================
-   Mobile-first Endlos-Runner (Singleplayer) - Komplett in JS
-   Features:
-   - Touch (swipe), Buttons und Tilt (DeviceOrientation)
-   - Mobile optimierungen: DPR limit, passive listeners
-   - Sehr gute Grafik: Parallax, particles, bloom-ish, motion trail
-   - Pause/Resume, Fullscreen prompt
-   - LocalStorage Highscore
-   =========================================================== */
+/* Vokabeltrainer JS
+   - Speichert in localStorage unter key VOCAB_APP_DATA
+   - Datenmodell: { id, front, back, note, tags[], box(1-5), nextReview: ISOString, correct, wrong, created }
+   - SRS intervals (Tage) für box 1..5: [0,1,3,7,14] (simple)
+*/
 
-(() => {
-  // ---------- Config & canvas ----------
-  const canvas = document.getElementById('game');
-  const ctx = canvas.getContext('2d', { alpha: true });
-  const DPR_LIMIT = 2; // cap devicePixelRatio for mobile perf
-  let DPR = Math.max(1, Math.min(DPR_LIMIT, devicePixelRatio || 1));
+const STORAGE_KEY = 'VOCAB_APP_DATA_v1';
+const INTERVALS = [0,1,3,7,14]; // box idx: 1..5 maps to these days
 
-  function resize() {
-    const cssW = canvas.clientWidth;
-    const cssH = canvas.clientHeight;
-    canvas.width = Math.round(cssW * DPR);
-    canvas.height = Math.round(cssH * DPR);
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+// DOM
+const listEl = document.getElementById('list');
+const btnNew = document.getElementById('btnNew');
+const btnPractice = document.getElementById('btnPractice');
+const btnExport = document.getElementById('btnExport');
+const btnImport = document.getElementById('btnImport');
+const btnReset = document.getElementById('btnReset');
+
+const editorTitle = document.getElementById('editorTitle');
+const frontIn = document.getElementById('front');
+const backIn = document.getElementById('back');
+const noteIn = document.getElementById('note');
+const tagsIn = document.getElementById('tags');
+const saveBtn = document.getElementById('saveBtn');
+const newClear = document.getElementById('newClear');
+
+const searchIn = document.getElementById('search');
+const tagFilter = document.getElementById('tagFilter');
+const onlyDue = document.getElementById('onlyDue');
+
+const fileInput = document.getElementById('fileInput');
+
+// Practice
+const practicePanel = document.getElementById('practicePanel');
+const practiceCard = document.getElementById('practiceCard');
+const cardFront = document.getElementById('cardFront');
+const cardNote = document.getElementById('cardNote');
+const btnBackToList = document.getElementById('btnBackToList');
+const showAnswer = document.getElementById('showAnswer');
+const answerArea = document.getElementById('answerArea');
+const theAnswer = document.getElementById('theAnswer');
+const btnCorrect = document.getElementById('btnCorrect');
+const btnWrong = document.getElementById('btnWrong');
+const practiceMeta = document.getElementById('practiceMeta');
+const progressInfo = document.getElementById('progressInfo');
+const statsInfo = document.getElementById('statsInfo');
+
+let vocab = []; // in-memory
+let currentEditId = null;
+let practiceQueue = [];
+let currentIndex = 0;
+let currentCard = null;
+
+// ---------- Storage ----------
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) { vocab = []; save(); return; }
+    vocab = JSON.parse(raw) || [];
+  } catch(e) { console.error('Load error', e); vocab = []; }
+}
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(vocab));
+}
+
+// ---------- Helpers ----------
+function uid() { return Math.random().toString(36).slice(2,10); }
+function todayISO() { const d=new Date(); d.setHours(0,0,0,0); return d.toISOString(); }
+function daysFromNow(days) { const d=new Date(); d.setDate(d.getDate()+days); d.setHours(0,0,0,0); return d.toISOString(); }
+function isDue(item) {
+  if(!item.nextReview) return true;
+  return new Date(item.nextReview) <= (new Date());
+}
+function parseTags(s) {
+  return (s||'').split(',').map(t=>t.trim()).filter(t=>t);
+}
+
+// create sample on first run
+function ensureSample(){
+  if(vocab.length === 0){
+    vocab.push({
+      id: uid(),
+      front: 'Haus',
+      back: 'house',
+      note: 'das Haus -- plural: Häuser',
+      tags: ['Alltag'],
+      box: 1,
+      nextReview: todayISO(),
+      correct: 0, wrong: 0,
+      created: new Date().toISOString()
+    });
+    vocab.push({
+      id: uid(),
+      front: 'Danke',
+      back: 'thank you',
+      note: '',
+      tags: ['Höflichkeit'],
+      box: 2,
+      nextReview: daysFromNow(1),
+      correct: 1, wrong: 0,
+      created: new Date().toISOString()
+    });
+    save();
   }
-  // Initial resize & on orient/resize
-  window.addEventListener('resize', resize, { passive: true });
-  window.addEventListener('orientationchange', () => { setTimeout(resize, 120); }, { passive: true });
-  resize();
+}
 
-  // Handy: reduce DPR on battery saver or low memory? (simple heuristic)
-  if(navigator.connection && navigator.connection.saveData) { DPR = 1; resize(); }
+// ---------- UI Rendering ----------
+function renderList() {
+  listEl.innerHTML = '';
+  const q = (searchIn.value||'').toLowerCase();
+  const selectedTag = tagFilter.value;
+  const only = onlyDue.checked;
+  const filtered = vocab
+    .filter(item => {
+      if(q && !(item.front||'').toLowerCase().includes(q) && !(item.back||'').toLowerCase().includes(q) && !(item.note||'').toLowerCase().includes(q)) return false;
+      if(selectedTag && !(item.tags||[]).includes(selectedTag)) return false;
+      if(only && !isDue(item)) return false;
+      return true;
+    })
+    .sort((a,b)=> new Date(a.nextReview || 0) - new Date(b.nextReview || 0));
+  if(filtered.length === 0){
+    const p = document.createElement('div'); p.className='muted'; p.textContent='Keine Vokabeln gefunden.'; listEl.appendChild(p); return;
+  }
+  for(const it of filtered){
+    const div = document.createElement('div'); div.className='item';
+    const left = document.createElement('div');
+    const title = document.createElement('div'); title.innerHTML = `<strong>${escapeHtml(it.front)}</strong> -- <span class="muted">${escapeHtml(it.back)}</span>`;
+    const meta = document.createElement('div'); meta.className='meta';
+    meta.innerHTML = `Box ${it.box} • ${it.tags.map(t=>'<span class="tag">'+escapeHtml(t)+'</span>').join(' ')} • Nächste: ${it.nextReview ? (new Date(it.nextReview)).toLocaleDateString() : 'sofort'}`;
+    left.appendChild(title); left.appendChild(meta);
+    const right = document.createElement('div'); right.style.display='flex'; right.style.gap='8px'; right.style.alignItems='center';
+    const btnEdit = document.createElement('button'); btnEdit.textContent = '✏️'; btnEdit.title='Bearbeiten';
+    btnEdit.onclick = ()=> editItem(it.id);
+    const btnDel = document.createElement('button'); btnDel.textContent='🗑️'; btnDel.title='Löschen';
+    btnDel.onclick = ()=> { if(confirm('Vokabel löschen?')) { vocab = vocab.filter(x=>x.id!==it.id); save(); render(); } };
+    const btnLearn = document.createElement('button'); btnLearn.textContent='▶'; btnLearn.title='Lernen (nur diese)';
+    btnLearn.onclick = ()=> startPractice([it]);
+    right.appendChild(btnLearn); right.appendChild(btnEdit); right.appendChild(btnDel);
+    div.appendChild(left); div.appendChild(right);
+    listEl.appendChild(div);
+  }
+}
 
-  // ---------- Game world ----------
-  const W = () => canvas.width / DPR;
-  const H = () => canvas.height / DPR;
-  const LANES = 3;
-  const laneW = () => W() / LANES;
-  const groundY = () => H() * 0.78;
-
-  const state = {
-    running: false,
-    paused: false,
-    speed: 260,
-    speedMax: 680,
-    accel: 7.2,
-    spawnT: 0,
-    coinT: 0,
-    score: 0,
-    coins: 0,
-    best: Number(localStorage.getItem('mobile_runner_best') || 0),
-    time: 0
-  };
-
-  const player = {
-    lane: 1, x: 0, y: 0,
-    w: 40, h: 58, vy: 0, jumping: false, sliding: false,
-    trail: [], // positions for motion trail
-    tilt: 0 // tilt input
-  };
-
-  const ents = []; // obstacles & coins
-  const particles = []; // particle pool
-
-  function laneCenter(i){ return (i + 0.5) * laneW(); }
-
-  // ---------- Input (touch, swipe, buttons, tilt) ----------
-  // Buttons
-  const leftBtn = document.getElementById('leftBtn');
-  const rightBtn = document.getElementById('rightBtn');
-  const jumpBtn = document.getElementById('jumpBtn');
-  const slideBtn = document.getElementById('slideBtn');
-  const pauseBtn = document.getElementById('pauseBtn');
-  const startBtn = document.getElementById('startBtn');
-  const fullscreenBtn = document.getElementById('fullscreenBtn');
-  const enableTiltBtn = document.getElementById('enableTilt');
-  const centerMsg = document.getElementById('centerMsg');
-
-  leftBtn.addEventListener('touchstart', e => { e.preventDefault(); moveLane(-1); }, { passive:false });
-  rightBtn.addEventListener('touchstart', e => { e.preventDefault(); moveLane(1); }, { passive:false });
-  jumpBtn.addEventListener('touchstart', e => { e.preventDefault(); doJump(); }, { passive:false });
-  slideBtn.addEventListener('touchstart', e => { e.preventDefault(); doSlide(); }, { passive:false });
-  pauseBtn.addEventListener('touchstart', e => { e.preventDefault(); togglePause(); }, { passive:false });
-
-  startBtn.addEventListener('click', startGame);
-  fullscreenBtn.addEventListener('click', tryFullscreen);
-
-  // Keyboard for desktop sanity
-  window.addEventListener('keydown', e => {
-    if(e.key === 'ArrowLeft') moveLane(-1);
-    else if(e.key === 'ArrowRight') moveLane(1);
-    else if(e.key === 'ArrowUp' || e.key === ' ') doJump();
-    else if(e.key.toLowerCase() === 'p') togglePause();
-    else if(e.key === 'Enter' && !state.running) startGame();
+function populateTagFilter(){
+  const tags = new Set();
+  for(const it of vocab) (it.tags||[]).forEach(t=>tags.add(t));
+  tagFilter.innerHTML = '<option value="">Alle Tags</option>';
+  Array.from(tags).sort().forEach(t=>{
+    const opt = document.createElement('option'); opt.value=t; opt.textContent=t; tagFilter.appendChild(opt);
   });
+}
 
-  // Swipe detection
-  let touchStart = null;
-  canvas.addEventListener('pointerdown', e => {
-    touchStart = {x: e.clientX, y: e.clientY, t: performance.now()};
-  }, {passive:true});
-  canvas.addEventListener('pointerup', e => {
-    if(!touchStart) return;
-    const dx = e.clientX - touchStart.x;
-    const dy = e.clientY - touchStart.y;
-    const dt = performance.now() - touchStart.t;
-    const min = 22;
-    if(Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > min && dt < 450) {
-      moveLane(dx > 0 ? 1 : -1);
-    } else if(dy < -min && dt < 500) {
-      doJump();
-    } else if(dy > min && dt < 450) {
-      doSlide();
-    } else {
-      // tap -- start or unpause
-      if(!state.running) startGame();
-      else if(state.paused) togglePause();
-    }
-    touchStart = null;
-  }, {passive:true});
+function render(){
+  renderList();
+  populateTagFilter();
+  updateStats();
+}
 
-  // Tilt control (optional, requests permission on iOS)
-  let tiltEnabled = false;
-  enableTiltBtn.addEventListener('click', async () => {
-    if(typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) {
-      try {
-        const res = await DeviceOrientationEvent.requestPermission();
-        if(res === 'granted') {
-          enableTilt(true);
-        } else enableTilt(false);
-      } catch(err) {
-        enableTilt(false);
-      }
-    } else {
-      // not iOS, enable directly
-      enableTilt(true);
-    }
+// ---------- Editor ----------
+btnNew.addEventListener('click', ()=>{ currentEditId = null; editorTitle.textContent='Neue Vokabel'; frontIn.value=''; backIn.value=''; noteIn.value=''; tagsIn.value=''; frontIn.focus(); });
+
+saveBtn.addEventListener('click', ()=>{
+  const front = frontIn.value.trim();
+  const back = backIn.value.trim();
+  if(!front || !back) { alert('Front und Rückseite müssen ausgefüllt sein.'); return; }
+  const tags = parseTags(tagsIn.value);
+  if(currentEditId){
+    const it = vocab.find(x=>x.id===currentEditId);
+    if(!it) return;
+    it.front = front; it.back = back; it.note = noteIn.value.trim(); it.tags = tags;
+  } else {
+    const item = {
+      id: uid(), front, back, note: noteIn.value.trim(), tags,
+      box: 1, nextReview: todayISO(), correct:0, wrong:0, created: new Date().toISOString()
+    };
+    vocab.push(item);
+  }
+  save();
+  render();
+  currentEditId = null;
+  editorTitle.textContent='Neue Vokabel';
+  frontIn.value=''; backIn.value=''; noteIn.value=''; tagsIn.value='';
+});
+
+newClear.addEventListener('click', ()=>{ currentEditId = null; editorTitle.textContent='Neue Vokabel'; frontIn.value=''; backIn.value=''; noteIn.value=''; tagsIn.value=''; });
+
+// Edit load
+function editItem(id){
+  const it = vocab.find(x=>x.id===id);
+  if(!it) return;
+  currentEditId = id;
+  editorTitle.textContent='Vokabel bearbeiten';
+  frontIn.value = it.front;
+  backIn.value = it.back;
+  noteIn.value = it.note || '';
+  tagsIn.value = (it.tags||[]).join(', ');
+}
+
+// ---------- Practice ----------
+btnPractice.addEventListener('click', ()=> startPractice());
+
+function startPractice(specificList){
+  // build queue
+  let pool = vocab.slice();
+  // prefer due items
+  pool.sort((a,b)=>{
+    const da = isDue(a) ? 0 : 1;
+    const db = isDue(b) ? 0 : 1;
+    return da - db || new Date(a.nextReview) - new Date(b.nextReview);
   });
-  function enableTilt(on) {
-    tiltEnabled = on;
-    enableTiltBtn.textContent = 'Tilt: ' + (on ? 'An' : 'Aus');
-    if(on) {
-      window.addEventListener('deviceorientation', handleTilt, true);
-    } else {
-      window.removeEventListener('deviceorientation', handleTilt, true);
-      player.tilt = 0;
-    }
-  }
-  function handleTilt(e) {
-    // e.gamma ~ left/right tilt in degrees (-90..90)
-    if(e.gamma !== null) {
-      const g = Math.max(-30, Math.min(30, e.gamma));
-      player.tilt = g / 30; // normalized -1..1
-      // small automatic lane shift threshold
-      if(Math.abs(player.tilt) > 0.6 && state.running && !state.paused) {
-        moveLane(player.tilt > 0 ? 1 : -1);
-      }
-    }
-  }
+  if(specificList && specificList.length>0) pool = specificList.slice();
+  if(pool.length === 0){ alert('Keine Vokabeln vorhanden.'); return; }
+  practiceQueue = pool.filter(Boolean);
+  currentIndex = 0;
+  showPracticeUI();
+  nextCard();
+}
 
-  // ---------- Controls actions ----------
-  function moveLane(dir) {
-    if(!state.running || state.paused) return;
-    player.lane = Math.max(0, Math.min(LANES - 1, player.lane + dir));
-    // small feedback particle
-    spawnParticles(player.x + dir * 12, player.y, 'dust', 6);
-  }
-  function doJump() {
-    if(!state.running || state.paused) return;
-    if(!player.jumping && !player.sliding) {
-      player.vy = -420;
-      player.jumping = true;
-      spawnParticles(player.x, player.y + player.h * 0.2, 'dust', 10);
-    }
-  }
-  function doSlide() {
-    if(!state.running || state.paused) return;
-    if(!player.jumping) {
-      player.sliding = true;
-      // slide duration
-      setTimeout(() => { player.sliding = false; }, 550);
-      spawnParticles(player.x, player.y + player.h * 0.2, 'dust', 8);
-    }
-  }
+function showPracticeUI(){
+  document.getElementById('editor').style.display='none';
+  practicePanel.style.display='block';
+  document.getElementById('list').closest('.card').style.display='none';
+  document.getElementById('practiceModeTitle').textContent = 'Lernmodus';
+}
 
-  // Pause toggle
-  function togglePause() {
-    if(!state.running) return;
-    state.paused = !state.paused;
-    showCenter(state.paused ? 'Pausiert' : '', state.paused ? 'Tippe erneut zum Fortsetzen' : '', state.paused);
-    if(!state.paused) hideCenter();
+btnBackToList.addEventListener('click', ()=> {
+  hidePracticeUI();
+});
+
+function hidePracticeUI(){
+  practicePanel.style.display='none';
+  document.getElementById('editor').style.display='block';
+  document.getElementById('list').closest('.card').style.display='block';
+}
+
+function nextCard(){
+  if(currentIndex >= practiceQueue.length){
+    // finished
+    cardFront.textContent = 'Fertig 🎉';
+    cardNote.textContent = '';
+    answerArea.style.display='none';
+    showAnswer.style.display='none';
+    progressInfo.textContent = `0 / ${practiceQueue.length}`;
+    statsInfo.textContent = '';
+    return;
   }
+  currentCard = practiceQueue[currentIndex];
+  cardFront.textContent = currentCard.front;
+  cardNote.textContent = currentCard.note || '';
+  theAnswer.textContent = '';
+  answerArea.style.display='none';
+  showAnswer.style.display='inline-block';
+  updatePracticeMeta();
+  progressInfo.textContent = `${currentIndex+1} / ${practiceQueue.length} (fällig: ${practiceQueue.filter(isDue).length})`;
+  statsInfo.textContent = `Korrekt: ${currentCard.correct} • Falsch: ${currentCard.wrong} • Box: ${currentCard.box}`;
+}
 
-  // Fullscreen helper
-  async function tryFullscreen() {
-    try {
-      if(document.fullscreenElement) await document.exitFullscreen();
-      else await document.documentElement.requestFullscreen();
-    } catch(e) {/*ignore*/}
+showAnswer.addEventListener('click', ()=>{
+  theAnswer.textContent = currentCard.back;
+  answerArea.style.display='flex';
+  showAnswer.style.display='none';
+});
+
+btnCorrect.addEventListener('click', ()=> {
+  markAnswer(true);
+});
+btnWrong.addEventListener('click', ()=> {
+  markAnswer(false);
+});
+
+function markAnswer(correct){
+  if(!currentCard) return;
+  if(correct){
+    currentCard.correct = (currentCard.correct||0)+1;
+    currentCard.box = Math.min(5, (currentCard.box||1) + 1);
+  } else {
+    currentCard.wrong = (currentCard.wrong||0)+1;
+    currentCard.box = Math.max(1, (currentCard.box||1) - 1);
   }
+  // schedule next review using INTERVALS
+  const days = INTERVALS[Math.max(0, Math.min(4, currentCard.box-1))] || 0;
+  currentCard.nextReview = daysFromNow(days);
+  save();
+  currentIndex++;
+  nextCard();
+}
 
-  // ---------- Game lifecycle ----------
-  function reset() {
-    state.running = false;
-    state.paused = false;
-    state.speed = 260;
-    state.spawnT = 0;
-    state.coinT = 0;
-    state.score = 0;
-    state.coins = 0;
-    state.time = 0;
+function updatePracticeMeta(){
+  practiceMeta.textContent = `Word: ${currentCard.front} • Tags: ${(currentCard.tags||[]).join(', ')}`;
+  progressInfo.textContent = `${currentIndex+1} / ${practiceQueue.length}`;
+}
 
-    player.lane = 1;
-    player.x = laneCenter(1);
-    player.y = groundY();
-    player.vy = 0;
-    player.jumping = false;
-    player.sliding = false;
-    player.trail.length = 0;
+// ---------- Import / Export ----------
+btnExport.addEventListener('click', ()=>{
+  const data = { exportedAt: new Date().toISOString(), vocab };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'vocab_backup_' + (new Date().toISOString().slice(0,10)) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+});
 
-    ents.length = 0;
-    particles.length = 0;
-
-    updateHUD();
-    showCenter('Tippe zum Start', 'Wische ←/→ • Hoch = Springen • Unten = Rutschen', true);
-    renderFrame(0);
-  }
-  function startGame() {
-    if(state.running) return;
-    hideCenter();
-    state.running = true;
-    state.paused = false;
-    lastT = performance.now();
-    requestAnimationFrame(loop);
-  }
-  function gameOver() {
-    state.running = false;
-    state.paused = false;
-    if(state.score > state.best) {
-      state.best = state.score;
-      localStorage.setItem('mobile_runner_best', state.best);
-    }
-    updateHUD();
-    showCenter('Game Over', 'Tippe für Neustart', true);
-  }
-
-  // ---------- Spawning ----------
-  function spawnObstacle() {
-    const lane = Math.floor(Math.random() * LANES);
-    // rare big train
-    const type = Math.random() < 0.14 ? 'train' : 'obs';
-    if(type === 'train') {
-      ents.push({type:'train', lane, y:-180, w: laneW()*0.96, h: 90, t:0});
-    } else {
-      const w = laneW()*0.56, h = 36 + Math.random()*28;
-      ents.push({type:'obs', lane, y:-h-8, w, h, t:0});
-    }
-  }
-  function spawnCoinRow() {
-    const lane = Math.floor(Math.random()*LANES);
-    const count = 4 + Math.floor(Math.random()*3); // 4..6
-    const spacing = 60;
-    for(let i=0;i<count;i++){
-      ents.push({type:'coin', lane, y: -i*spacing-26, r:10, spin:Math.random()*Math.PI*2});
-    }
-  }
-
-  // ---------- Particles ----------
-  function spawnParticles(x,y,type,count){
-    for(let i=0;i<count;i++){
-      if(particles.length>400) break; // cap
-      if(type === 'dust'){
-        particles.push({
-          type:'dust', x, y,
-          vx:(Math.random()*2-1)*60, vy:-60-Math.random()*60, g:260,
-          life:0.7 + Math.random()*0.6, age:0, s:4+Math.random()*6, a:1
-        });
-      } else if(type === 'spark'){
-        particles.push({
-          type:'spark', x, y,
-          vx:(Math.random()*2-1)*200, vy:-120-Math.random()*120, g:400,
-          life:0.7 + Math.random()*0.6, age:0, a:1
-        });
-      }
-    }
-  }
-
-  // ---------- Loop ----------
-  let lastT = performance.now();
-  function loop(t) {
-    if(!state.running) return;
-    const dt = Math.min(0.033, (t - lastT) / 1000);
-    lastT = t;
-    if(!state.paused) {
-      update(dt);
-      renderFrame(dt);
-    }
-    requestAnimationFrame(loop);
-  }
-
-  function update(dt) {
-    state.time += dt;
-    // speed up over time
-    state.speed = Math.min(state.speedMax, state.speed + state.accel * dt);
-
-    // lane follow
-    player.x += (laneCenter(player.lane) - player.x) * Math.min(1, dt * 12);
-
-    // tilt small nudge if enabled
-    if(tiltEnabled && Math.abs(player.tilt) > 0.12) {
-      const dir = player.tilt > 0 ? 1 : -1;
-      // only move if tilt maintained (simple)
-      if(!player._tiltCooldown) {
-        player._tiltCooldown = 0.35;
-        moveLane(dir);
+btnImport.addEventListener('click', ()=> fileInput.click());
+fileInput.addEventListener('change', async (e)=>{
+  const f = e.target.files[0]; if(!f) return;
+  try {
+    const txt = await f.text();
+    const parsed = JSON.parse(txt);
+    if(parsed && parsed.vocab && Array.isArray(parsed.vocab)){
+      if(confirm('Importiert wird eine Datei mit ' + parsed.vocab.length + ' Einträgen. Anhängen statt überschreiben? OK = anhängen, Abbrechen = überschreiben')) {
+        // append but avoid id collision
+        const existingIds = new Set(vocab.map(x=>x.id));
+        for(const it of parsed.vocab){
+          if(existingIds.has(it.id)) it.id = uid();
+          vocab.push(it);
+        }
       } else {
-        player._tiltCooldown -= dt;
-        if(player._tiltCooldown < 0) player._tiltCooldown = 0;
+        vocab = parsed.vocab;
       }
+      save(); render();
+      alert('Import erfolgreich.');
+    } else {
+      alert('Ungültiges Format: Datei enthält kein vocab Array.');
     }
-
-    // physics
-    player.vy += 980 * dt;
-    player.y += player.vy * dt;
-    if(player.y >= groundY()) {
-      player.y = groundY();
-      player.vy = 0;
-      player.jumping = false;
-    }
-
-    // slide behavior reduces hitbox (handled in collision)
-    // trail
-    player.trail.unshift({x:player.x, y:player.y});
-    if(player.trail.length > 14) player.trail.pop();
-
-    // spawn cadence
-    state.spawnT -= dt;
-    state.coinT -= dt;
-    if(state.spawnT <= 0) {
-      spawnObstacle();
-      state.spawnT = Math.max(0.45, 1.1 - (state.speed - 260) / 480);
-    }
-    if(state.coinT <= 0) {
-      spawnCoinRow();
-      state.coinT = 1.05 + Math.random() * 0.9;
-    }
-
-    // move ents
-    for(const e of ents) { e.y += state.speed * dt; e.t = (e.t || 0) + dt; }
-
-    // move particles
-    for(let i=particles.length-1;i>=0;i--){
-      const p = particles[i];
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
-      p.vy += p.g * dt;
-      p.age += dt;
-      p.a = Math.max(0, 1 - (p.age / p.life));
-      if(p.age >= p.life || p.y > H() + 40) particles.splice(i,1);
-    }
-
-    // collisions & scoring
-    const px = player.x, py = player.y, pw = player.w, ph = player.h;
-    for(let i=ents.length-1;i>=0;i--){
-      const e = ents[i];
-      // cull off screen
-      if(e.y > H() + 80) { ents.splice(i,1); continue; }
-      if(e.lane !== player.lane) continue;
-
-      if(e.type === 'obs' || e.type === 'train') {
-        const ex = laneCenter(e.lane) - e.w / 2;
-        const ey = e.y, ew = e.w, eh = e.h;
-        // adapt hitbox for sliding
-        const phAdj = player.sliding ? ph * 0.6 : ph;
-        const pyAdj = player.sliding ? py - ph * 0.4 : py - ph;
-        if(rectsOverlap(px - pw / 2, pyAdj, pw, phAdj, ex, ey, ew, eh)) {
-          // hit
-          spawnParticles(px, py - ph * 0.4, 'spark', 24);
-          gameOver();
-          return;
-        }
-      } else if(e.type === 'coin') {
-        const cx = laneCenter(e.lane), cy = e.y, r = e.r;
-        if(circleRectOverlap(cx, cy, r, px - pw / 2, py - ph, pw, ph)) {
-          ents.splice(i,1);
-          state.coins++;
-          state.score += 12;
-          spawnParticles(cx, cy, 'spark', 12);
-          pulseUpdate('#coins');
-        }
-      }
-    }
-
-    // distance-based score
-    state.score += Math.floor(dt * state.speed * 0.2);
-    updateHUD();
+  } catch(err) {
+    alert('Import-Fehler: ' + err.message);
+  } finally {
+    fileInput.value = '';
   }
+});
 
-  // ---------- Rendering ----------
-  function renderFrame(dt) {
-    // clear
-    ctx.clearRect(0, 0, W(), H());
-    // draw background (sky + parallax city)
-    drawSky();
-    drawCityParallax();
-    // draw track and lanes perspective
-    drawTrack();
-    // fog behind entities
-    drawFog(0.06);
-    // entities
-    for(const e of ents) {
-      if(e.type === 'train') drawTrain(e);
-      else if(e.type === 'obs') drawObstacle(e);
-      else if(e.type === 'coin') drawCoin(e);
-    }
-    // particles
-    drawParticles();
-    // player
-    drawPlayer();
-    // simple post fx: vignette + soft bloom trick
-    drawVignette();
+// Reset (delete all)
+btnReset.addEventListener('click', ()=>{
+  if(confirm('Alle Vokabeln löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) {
+    vocab = []; save(); render();
+    alert('Gelöscht.');
   }
+});
 
-  // --- Draw helpers (clean and tuned for mobile) ---
-  function drawSky() {
-    const g = ctx.createLinearGradient(0, 0, 0, H());
-    g.addColorStop(0, '#061424'); g.addColorStop(1, '#0b2138');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W(), H());
-    // subtle sun glow
-    const sx = W() * 0.82, sy = H() * 0.12;
-    const rg = ctx.createRadialGradient(sx, sy, 0, sx, sy, 60);
-    rg.addColorStop(0, 'rgba(255,230,160,0.6)'); rg.addColorStop(1, 'rgba(255,230,160,0)');
-    ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(sx, sy, 60, 0, Math.PI * 2); ctx.fill();
-  }
+// ---------- Utility & Stats ----------
+function updateStats(){
+  const total = vocab.length;
+  const due = vocab.filter(isDue).length;
+  const mastered = vocab.filter(v=>v.box>=4).length;
+  document.getElementById('practiceModeTitle').textContent = `Lernen -- ${due} fällig / ${total} gesamt`;
+  // small stats area
+  const totalCorrect = vocab.reduce((s,i)=>s + (i.correct||0), 0);
+  const totalWrong = vocab.reduce((s,i)=>s + (i.wrong||0), 0);
+  // statsInfo may be used in practice
+  statsInfo.textContent = `Gesamt: ${total} • Fällig: ${due} • ✔ ${totalCorrect} / ✖ ${totalWrong}`;
+}
 
-  function drawCityParallax(){
-    const baseY = H() * 0.28;
-    for(let layer=0; layer<3; layer++){
-      const par = 1 - layer * 0.18;
-      const offset = (state.time * 35 * par) % 80;
-      const y = baseY + layer * 16;
-      ctx.fillStyle = `rgba(28,56,84,${0.45 - layer*0.12})`;
-      for(let i=-2;i<12;i++){
-        const x = (i * 80 - offset);
-        const w = 52 + (i%3) * 12;
-        const h = 36 + (i%5) * 8 + layer * 6;
-        roundRect(ctx, x, y - h, w, h, 4, true, false);
-      }
-    }
-  }
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=> ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-  function drawTrack(){
-    const vanY = H() * 0.18;
-    const roadTop = laneW() * 2.2;
-    const roadBot = W() * 0.92;
-    pathQuad(W()/2 - roadTop/2, vanY, W()/2 + roadTop/2, vanY, W()/2 + roadBot/2, H(), W()/2 - roadBot/2, H(), true);
+// Search and filter bindings
+searchIn.addEventListener('input', renderList);
+tagFilter.addEventListener('change', renderList);
+onlyDue.addEventListener('change', renderList);
 
-    // rails
-    ctx.strokeStyle = '#15425d'; ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(W()/2 - roadTop/2 + 10, vanY);
-    ctx.lineTo(W()/2 - roadBot/2 + 24, H());
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(W()/2 + roadTop/2 - 10, vanY);
-    ctx.lineTo(W()/2 + roadBot/2 - 24, H());
-    ctx.stroke();
+// click list area to show editor if click on header area etc.
+document.getElementById('list').addEventListener('click', ()=>{ /* noop */ });
 
-    // lane separators (dashed)
-    ctx.setLineDash([12,18]); ctx.lineWidth = 2.2; ctx.strokeStyle = 'rgba(46,109,145,0.9)';
-    for(let i=1;i<LANES;i++){
-      const topX = W()/2 + (i - 1.5) * (roadTop / LANES);
-      const botX = W()/2 + (i - 1.5) * (roadBot / LANES);
-      ctx.beginPath(); ctx.moveTo(topX, vanY); ctx.lineTo(botX, H()); ctx.stroke();
-    }
-    ctx.setLineDash([]);
-  }
+// init
+load();
+ensureSample();
+render();
 
-  function drawFog(alpha){
-    ctx.fillStyle = `rgba(145,182,255,${0.04})`;
-    ctx.fillRect(0, H()*0.62, W(), H()*0.38);
-  }
-
-  function drawObstacle(e){
-    const x = laneCenter(e.lane) - e.w / 2;
-    const y = e.y;
-    // shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.35)';
-    roundRect(ctx, x + 3, y + 8, e.w, e.h, 8, true, false);
-    // gradient body
-    const g = ctx.createLinearGradient(x, y, x, y + e.h);
-    g.addColorStop(0, '#ff5a60'); g.addColorStop(1, '#d13b45');
-    ctx.fillStyle = g; roundRect(ctx, x, y, e.w, e.h, 8, true, false);
-    // highlight
-    ctx.fillStyle = 'rgba(255,255,255,0.12)'; roundRect(ctx, x + 6, y + 6, e.w - 12, 10, 6, true, false);
-  }
-
-  function drawTrain(e){
-    const x = laneCenter(e.lane) - e.w / 2;
-    const y = e.y;
-    // shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.4)';
-    roundRect(ctx, x + 6, y + 12, e.w, e.h, 12, true, false);
-    // body
-    const g = ctx.createLinearGradient(x, y, x, y + e.h);
-    g.addColorStop(0, '#273a57'); g.addColorStop(1,'#172734');
-    ctx.fillStyle = g; roundRect(ctx, x, y, e.w, e.h, 12, true, false);
-    // windows
-    ctx.fillStyle = 'rgba(200,230,255,0.18)';
-    const cols = Math.max(2, Math.floor((e.w - 40) / 48));
-    for(let i=0;i<cols;i++){
-      const wx = x + 12 + i * ((e.w - 24) / cols);
-      roundRect(ctx, wx, y + 8, (e.w - 24) / cols - 8, 16, 4, true, false);
-    }
-  }
-
-  function drawCoin(e) {
-    const cx = laneCenter(e.lane), cy = e.y;
-    const rx = e.r, ry = e.r * (0.6 + 0.4 * Math.abs(Math.cos(e.spin || 0)));
-    // glow
-    ctx.globalCompositeOperation = 'lighter';
-    const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, 22);
-    gr.addColorStop(0, 'rgba(137,255,245,0.55)'); gr.addColorStop(1, 'rgba(137,255,245,0)');
-    ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(cx, cy, 20, 0, Math.PI*2); ctx.fill();
-    ctx.globalCompositeOperation = 'source-over';
-    // body
-    const g = ctx.createLinearGradient(cx, cy - ry, cx, cy + ry);
-    g.addColorStop(0, 'rgba(255,245,194,1)'); g.addColorStop(1, 'rgba(255,214,77,1)');
-    shadowEllipse(ctx, cx + 2, cy + 3, rx, ry, 0.36);
-    ellipse(ctx, cx, cy, rx, ry, g);
-    // spec
-    ctx.save(); ctx.translate(cx, cy); ctx.rotate(-0.25); ctx.fillStyle = 'rgba(255,255,255,0.35)'; ellipse(ctx, 0, 0, rx*0.12, ry*0.9, ctx.fillStyle); ctx.restore();
-  }
-
-  function drawParticles() {
-    for(const p of particles){
-      ctx.globalAlpha = p.a;
-      if(p.type === 'dust') {
-        ctx.fillStyle = 'rgba(255,255,255,0.08)';
-        ctx.beginPath(); ctx.ellipse(p.x, p.y, p.s*1.2, p.s*0.6, 0, 0, Math.PI*2); ctx.fill();
-      } else if(p.type === 'spark') {
-        ctx.strokeStyle = 'rgba(255,220,140,0.95)'; ctx.lineWidth = 1.6;
-        ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - p.vx * 0.04, p.y - p.vy * 0.04); ctx.stroke();
-      }
-      ctx.globalAlpha = 1;
-    }
-  }
-
-  function drawPlayer() {
-    const px = player.x, py = player.y, pw = player.w, ph = player.h;
-    // trail
-    ctx.globalAlpha = 0.7;
-    for(let i=player.trail.length-1;i>=2;i-=2){
-      const p = player.trail[i]; const a = (1 - i/player.trail.length) * 0.45;
-      ctx.globalAlpha = a;
-      drawPlayerBody(p.x, p.y, pw, ph, true);
-    }
-    ctx.globalAlpha = 1;
-    drawPlayerBody(px, py, pw, ph, false);
-  }
-
-  function drawPlayerBody(px, py, pw, ph, fade) {
-    // shadow ellipse
-    shadowEllipse(ctx, px, groundY() + 6, pw*0.45, 6, 0.32);
-    // body gradient
-    const g = ctx.createLinearGradient(px, py - ph, px, py);
-    g.addColorStop(0, '#ffe36b'); g.addColorStop(1, '#ffb62e');
-    roundRect(ctx, px - pw/2, py - ph, pw, ph, 10, true, false);
-    ctx.fillStyle = g; roundRect(ctx, px - pw/2, py - ph, pw, ph, 10, true, false);
-    // accent
-    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
-    ctx.fillRect(px - pw/2 + 6, py - ph + 14, pw - 12, 6);
-    // head
-    ctx.beginPath(); ctx.arc(px, py - ph - 12, 12, 0, Math.PI*2); ctx.fillStyle = '#ffeab0'; ctx.fill();
-  }
-
-  function drawVignette() {
-    const vg = ctx.createRadialGradient(W()/2, H()*0.6, Math.min(W(),H())*0.2, W()/2, H()*0.6, Math.max(W(),H())*0.75);
-    vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.12)');
-    ctx.fillStyle = vg; ctx.fillRect(0,0,W(),H());
-  }
-
-  // ---------- Utility draw primitives ----------
-  function roundRect(c, x, y, w, h, r, fill, stroke) {
-    const rr = Math.min(r, w/2, h/2);
-    c.beginPath();
-    c.moveTo(x+rr, y);
-    c.arcTo(x + w, y, x + w, y + h, rr);
-    c.arcTo(x + w, y + h, x, y + h, rr);
-    c.arcTo(x, y + h, x, y, rr);
-    c.arcTo(x, y, x + w, y, rr);
-    if(fill) c.fill();
-    if(stroke) c.stroke();
-  }
-  function pathQuad(x1,y1,x2,y2,x3,y3,x4,y4,fill) {
-    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.lineTo(x3,y3); ctx.lineTo(x4,y4); ctx.closePath();
-    if(fill) ctx.fill();
-  }
-  function ellipse(c, cx, cy, rx, ry, fillStyle) {
-    c.beginPath(); c.ellipse(cx, cy, rx, ry, 0, 0, Math.PI*2); c.fillStyle = fillStyle; c.fill();
-  }
-  function shadowEllipse(c, cx, cy, rx, ry, alpha) {
-    c.save(); c.fillStyle = `rgba(0,0,0,${alpha})`; c.beginPath(); c.ellipse(cx, cy, rx, ry, 0, 0, Math.PI*2); c.fill(); c.restore();
-  }
-  function rectsOverlap(ax,ay,aw,ah,bx,by,bw,bh){
-    return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
-  }
-  function circleRectOverlap(cx,cy,r, rx,ry,rw,rh){
-    const nx = Math.max(rx, Math.min(cx, rx+rw));
-    const ny = Math.max(ry, Math.min(cy, ry+rh));
-    const dx = cx - nx, dy = cy - ny; return (dx*dx + dy*dy) <= r*r;
-  }
-
-  // ---------- HUD helpers ----------
-  const scoreEl = document.getElementById('score');
-  const coinsEl = document.getElementById('coins');
-  const bestEl = document.getElementById('best');
-  function updateHUD(){
-    scoreEl.textContent = Math.floor(state.score);
-    coinsEl.textContent = state.coins;
-    bestEl.textContent = state.best;
-  }
-  function pulseUpdate(sel) {
-    const el = document.querySelector(sel);
-    el.animate([{transform:'scale(1)'},{transform:'scale(1.18)'},{transform:'scale(1)'}], {duration:170});
-  }
-
-  // ---------- Center messages ----------
-  function showCenter(t, s, show = true) {
-    document.getElementById('title').textContent = t || '';
-    document.getElementById('subtitle').textContent = s || '';
-    centerMsg.hidden = !show;
-  }
-  function hideCenter() { centerMsg.hidden = true; }
-
-  // ---------- Game Over & scoring handled above ----------
-
-  // ---------- Initial kick & behaviour ----------
-  function renderFrameOnce() { renderFrame(0); }
-  resize();
-  reset();
-
-  // Prevent screen from sleeping? (optional; not guaranteed)
-  let wakeLock = null;
-  async function requestWakeLock() {
-    try {
-      if('wakeLock' in navigator) {
-        wakeLock = await navigator.wakeLock.request('screen');
-      }
-    } catch(e){}
-  }
-  // ask wake lock on start
-  document.getElementById('startBtn').addEventListener('click', requestWakeLock);
-
-  // Softly request fullscreen on first user interaction (mobile UX)
-  let firstInteraction = false;
-  function promptFullscreenOnce() {
-    if(firstInteraction) return;
-    firstInteraction = true;
-    // try to show native fullscreen prompt only when available
-    // don't force -- user can click the Vollbild button
-  }
-  canvas.addEventListener('pointerdown', promptFullscreenOnce, {passive:true});
-  canvas.addEventListener('pointerdown', ()=>{ if(!state.running) startGame(); }, {passive:true});
-
-  // ---------- End of game code ----------
-
-  // expose reset for restart when center tapped
-  centerMsg.addEventListener('click', () => {
-    if(!state.running) reset();
-    else if(state.paused) { state.paused = false; hideCenter(); }
-  });
-
-  // Make sure to recalc size initially
-  setTimeout(() => { resize(); renderFrameOnce(); }, 100);
-
-  // debug: show best in HUD initially
-  updateHUD();
-})();
 </script>
 </body>
 </html>
