@@ -69,9 +69,62 @@ button:hover{background:#a29bfe;transform:scale(1.05);}
 .progress, .level, .streak{margin-top:10px;font-size:0.9em;color:#fff;text-shadow:1px 1px 3px rgba(0,0,0,0.3);}
 .vocab-item{transition:0.3s;}
 .vocab-item:hover{transform:scale(1.02);}
+
+/* Avatar oben rechts */
+#avatar {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #6c5ce7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 1.2em;
+  cursor: pointer;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  z-index: 1000;
+}
+
+/* Popup-Fenster */
+#avatarPopup {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  width: 220px;
+  background: rgba(255,255,255,0.95);
+  border-radius: 15px;
+  padding: 15px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+  display: none;
+  z-index: 1000;
+}
+#avatarPopup h3 {
+  margin-top: 0;
+  font-size: 1.1em;
+  color: #333;
+}
+#avatarPopup div {
+  margin: 5px 0;
+  font-size: 0.95em;
+  color: #555;
+}
 </style>
 </head>
 <body>
+
+<div id="avatar" onclick="toggleAvatarPopup()">😊</div>
+<div id="avatarPopup">
+  <h3>Benutzerinfo</h3>
+  <div><strong>Name:</strong> <span id="popupName"></span></div>
+  <div><strong>Level:</strong> <span id="popupLevel"></span></div>
+  <div><strong>Streak:</strong> <span id="popupStreak"></span></div>
+  <div><strong>Erfolge:</strong> <span id="popupSuccess"></span></div>
+</div>
 
 <h1>GGLernen Vokabeltrainer</h1>
 
@@ -79,7 +132,6 @@ button:hover{background:#a29bfe;transform:scale(1.05);}
   <h2>Konto</h2>
   <input type="text" id="usernameInput" placeholder="Dein Name">
   <button onclick="saveUsername()">Speichern</button>
-  <div id="accountInfo"></div>
 </section>
 
 <section>
@@ -122,9 +174,23 @@ function saveUsername(){
   username=document.getElementById('usernameInput').value.trim();
   localStorage.setItem('username',username);
   updateAccountInfo();
+  updateAvatarPopup();
 }
 function updateAccountInfo(){
-  document.getElementById('accountInfo').innerHTML=`<strong>Name:</strong> ${username}<br><strong>Streak:</strong> ${streak} Tage`;
+  // aktuell nur Streak-Anzeige in Hauptbereich
+  document.getElementById('streakDisplay').innerText=`Streak: ${streak} Tage`;
+}
+function updateAvatarPopup(){
+  document.getElementById('popupName').innerText=username || 'Unbekannt';
+  let levelText = document.getElementById('levelDisplay').innerText;
+  document.getElementById('popupLevel').innerText = levelText ? levelText.replace('Level: ','1') : '1';
+  document.getElementById('popupStreak').innerText = `${streak} Tage`;
+  let totalSuccess = vocabList.reduce((acc,v)=>acc+v.right,0);
+  document.getElementById('popupSuccess').innerText = totalSuccess;
+}
+function toggleAvatarPopup(){
+  const popup = document.getElementById('avatarPopup');
+  popup.style.display = (popup.style.display==='block') ? 'none' : 'block';
 }
 
 // --- Ordner ---
@@ -198,6 +264,7 @@ function addVocab(){
     showCard();
     renderVocabList();
     updateProgress();
+    updateAvatarPopup();
   }
 }
 
@@ -209,10 +276,10 @@ function answer(isRight){
   saveFolders();
   nextCard();
   renderVocabList();
-  updateProgress();
-  streak++; // Einfache Streak Logik
+  streak++; 
   localStorage.setItem('streak',JSON.stringify(streak));
-  updateAccountInfo();
+  updateProgress();
+  updateAvatarPopup();
 }
 
 function nextCard(){
@@ -236,8 +303,8 @@ function renderVocabList(){
 function updateProgress(){
   if(vocabList.length==0){
     document.getElementById('progress').innerText='Fortschritt: 0%';
-    document.getElementById('levelDisplay').innerText='';
-    document.getElementById('streakDisplay').innerText='';
+    document.getElementById('levelDisplay').innerText='Level: 1';
+    document.getElementById('streakDisplay').innerText=`Streak: ${streak} Tage`;
     return;
   }
   let total=vocabList.length;
@@ -251,6 +318,7 @@ function updateProgress(){
 // --- Initial ---
 renderFolders();
 updateAccountInfo();
+updateAvatarPopup();
 </script>
 
 </body>
