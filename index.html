@@ -29,21 +29,21 @@ button:hover{background:#a29bfe;transform:scale(1.05);}
 <section>
 <h2>Konto</h2>
 <input type="text" id="usernameInput" placeholder="Dein Name">
-<button onclick="saveUsername()">Speichern</button>
+<button id="saveUserBtn">Speichern</button>
 <div id="accountInfo"></div>
 </section>
 
 <section>
 <h2>Ordner</h2>
 <input type="text" id="newFolderName" placeholder="Neuen Ordner erstellen">
-<button onclick="createFolder()">Erstellen</button>
+<button id="createFolderBtn">Erstellen</button>
 <div id="folderList"></div>
 </section>
 
 <section id="trainerSection" style="display:none;">
 <h2 id="folderTitle"></h2>
 <div class="card-container">
-<div class="card" id="card" onclick="flipCard()">
+<div class="card" id="card">
 <div class="front" id="cardFront"></div>
 <div class="back" id="cardBack"></div>
 </div>
@@ -51,12 +51,12 @@ button:hover{background:#a29bfe;transform:scale(1.05);}
 <div>
 <input type="text" id="frontInput" placeholder="Fremdsprache">
 <input type="text" id="backInput" placeholder="Deutsch">
-<button onclick="addVocab()">Hinzufügen</button>
+<button id="addVocabBtn">Hinzufügen</button>
 </div>
 <div id="vocabList"></div>
 <div>
-<button onclick="answer(true)">Richtig</button>
-<button onclick="answer(false)">Falsch</button>
+<button id="correctBtn">Richtig</button>
+<button id="wrongBtn">Falsch</button>
 </div>
 <div class="progress" id="progress"></div>
 <div class="level" id="levelDisplay"></div>
@@ -71,10 +71,11 @@ let streakDays = JSON.parse(localStorage.getItem('streakDays')) || [];
 
 function saveUsername(){
     username=document.getElementById('usernameInput').value.trim();
-    localStorage.setItem('username',username);
-    updateAccountInfo();
+    if(username){
+        localStorage.setItem('username',username);
+        updateAccountInfo();
+    }
 }
-
 function updateStreak(){
     let today = new Date().toISOString().slice(0,10);
     if(!streakDays.includes(today)){
@@ -82,7 +83,6 @@ function updateStreak(){
         localStorage.setItem('streakDays',JSON.stringify(streakDays));
     }
 }
-
 function updateAccountInfo(){
     updateStreak();
     let streak=streakDays.length;
@@ -110,7 +110,7 @@ function renderFolders(){
         let delBtn=document.createElement('button');
         delBtn.innerText='Löschen';
         delBtn.className='delete-btn';
-        delBtn.onclick=()=>{deleteFolder(name)};
+        delBtn.onclick=()=>deleteFolder(name);
         div.appendChild(openBtn);
         div.appendChild(delBtn);
         list.appendChild(div);
@@ -159,11 +159,11 @@ function showCard(){
     document.getElementById('card').classList.remove('flipped');
     flipped=false;
 }
-
-function flipCard(){
-    if(vocabList.length==0) return;
-    flipped=!flipped;
-    document.getElementById('card').classList.toggle('flipped');
+document.getElementById('card').onclick=function(){
+    if(vocabList.length>0){
+        flipped=!flipped;
+        this.classList.toggle('flipped');
+    }
 }
 
 function addVocab(){
@@ -178,6 +178,7 @@ function addVocab(){
         document.getElementById('backInput').value='';
         currentIndex=vocabList.length-1;
         showCard();
+        updateProgress();
     }
 }
 
@@ -196,4 +197,31 @@ function answer(isCorrect){
     if(vocabList.length==0) return;
     if(isCorrect) vocabList[currentIndex].correct++;
     else vocabList[currentIndex].correct=Math.max(0,vocabList[currentIndex].correct-1);
-    folders[currentFolder]=v
+    folders[currentFolder]=vocabList;
+    saveFolders();
+    renderVocabList();
+    currentIndex=(currentIndex+1)%vocabList.length;
+    showCard();
+    updateProgress();
+}
+
+function updateProgress(){
+    let correctCount=vocabList.filter(v=>v.correct>0).length;
+    let level=Math.floor(correctCount/3)+1;
+    document.getElementById('progress').innerText=`Richtig gelernte Vokabeln: ${correctCount} / ${vocabList.length}`;
+    document.getElementById('levelDisplay').innerText=`Level: ${level}`;
+    document.getElementById('streakDisplay').innerText=`Streak: ${streakDays.length} Tage`;
+}
+
+// --- Event Listener ---
+document.getElementById('saveUserBtn').onclick=saveUsername;
+document.getElementById('createFolderBtn').onclick=createFolder;
+document.getElementById('addVocabBtn').onclick=addVocab;
+document.getElementById('correctBtn').onclick=()=>answer(true);
+document.getElementById('wrongBtn').onclick=()=>answer(false);
+
+// --- Initial ---
+renderFolders();
+</script>
+</body>
+</html>
