@@ -1,98 +1,86 @@
 <!doctype html>
 <html lang="de">
 <head>
-<meta charset="utf-8"/>
+<meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Vokabeltrainer (Local)</title>
+<title>Study Helper -- Lernkarten & Quiz</title>
 <style>
-  :root{--bg:#0b1220;--card:#071427;--accent:#57d0ff;--muted:#9fb3c9;--good:#8ee08a;--bad:#ff7b7b}
-  html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background:linear-gradient(180deg,#02101a,#072231);color:#e6f6ff}
-  .wrap{max-width:980px;margin:18px auto;padding:14px;}
-  header{display:flex;gap:12px;align-items:center;justify-content:space-between}
-  header h1{margin:0;font-size:20px;letter-spacing:0.2px}
-  .row{display:flex;gap:12px;align-items:center}
-  .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.04);padding:12px;border-radius:12px}
+  :root{
+    --bg:#0b1220; --card:#071427; --accent:#57d0ff; --muted:#9fb3c9;
+    --good:#8ee08a; --bad:#ff7b7b;
+  }
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#02101a,#072231);color:#eaf6ff}
+  .wrap{max-width:980px;margin:18px auto;padding:14px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  h1{margin:0;font-size:20px}
   .controls{display:flex;gap:8px;flex-wrap:wrap}
   button{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--accent);padding:8px 10px;border-radius:8px;font-weight:700;cursor:pointer}
-  button.ghost{border:1px dashed rgba(255,255,255,0.03);color:var(--muted);font-weight:600}
-  input,textarea,select{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);padding:8px;border-radius:8px;color:#eaf6ff}
-  label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+  .ghost{border:1px dashed rgba(255,255,255,0.03);color:var(--muted)}
   .grid{display:grid;grid-template-columns:1fr 360px;gap:14px;margin-top:14px}
   @media(max-width:900px){ .grid{grid-template-columns:1fr} }
+  .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.04);padding:12px;border-radius:12px}
   .list{max-height:60vh;overflow:auto;padding:8px;display:flex;flex-direction:column;gap:8px}
   .item{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.02)}
-  .meta{font-size:13px;color:var(--muted)}
-  .badge{background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:999px;font-weight:700;color:var(--muted);font-size:12px}
-  .big{font-size:18px}
-  footer{margin-top:18px;color:var(--muted);font-size:13px}
-  .practiceArea{display:flex;flex-direction:column;gap:12px}
-  .card.center{display:grid;place-items:center;min-height:220px}
-  .answerBtns{display:flex;gap:8px;justify-content:center}
-  .correct{background:linear-gradient(90deg, rgba(34,170,84,0.22), rgba(34,170,84,0.1)); border-color: rgba(34,170,84,0.4); color:var(--good)}
-  .wrong{background:linear-gradient(90deg, rgba(220,80,80,0.16), rgba(220,80,80,0.06)); border-color: rgba(220,80,80,0.35); color:var(--bad)}
-  .small{font-size:13px;padding:6px 8px}
-  .muted{color:var(--muted)}
+  label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+  input,textarea,select{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);padding:8px;border-radius:8px;color:#eaf6ff;width:100%}
   textarea{min-height:68px;resize:vertical}
+  .muted{color:var(--muted)}
+  .big{font-size:18px}
+  .center{display:grid;place-items:center}
+  .answerBtns{display:flex;gap:8px;justify-content:center;margin-top:8px}
+  .small{font-size:13px;padding:6px 8px}
   .tag{background:#082532;padding:6px 8px;border-radius:999px;color:var(--muted);font-size:12px;margin-right:6px}
-  .controls .danger{color:#ff9aa2;border-color:rgba(255,255,255,0.03)}
-  .flex{display:flex;align-items:center;gap:8px}
-  .spaced{display:flex;justify-content:space-between;align-items:center}
+  footer{margin-top:18px;color:var(--muted);font-size:13px}
 </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-      <h1>Vokabeltrainer -- Local (Speichert im Browser)</h1>
-      <div class="row">
-        <div class="controls">
-          <button id="btnNew">➕ Neue Vokabel</button>
-          <button id="btnPractice">▶ Lernen</button>
-          <button id="btnExport">⬇ Export</button>
-          <button id="btnImport" class="ghost">⬆ Import</button>
-          <button id="btnReset" class="danger ghost">🗑️ Reset</button>
-        </div>
+      <h1>Study Helper -- Karteikarten & Quiz</h1>
+      <div class="controls">
+        <button id="btnNew">➕ Karte</button>
+        <button id="btnStudy">▶ Lernen</button>
+        <button id="btnQuiz">🧪 Quiz</button>
+        <button id="btnExport">⬇ Export</button>
+        <button id="btnImport" class="ghost">⬆ Import</button>
+        <button id="btnReset" class="ghost">🗑️ Reset</button>
       </div>
     </header>
 
     <div class="grid">
-      <!-- Links: Liste & Add -->
       <div>
         <div class="card">
-          <div class="spaced">
+          <div style="display:flex;justify-content:space-between;align-items:center">
             <div>
-              <strong>Filter</strong>
-              <div class="muted">Suche / Tag / fällig</div>
+              <strong>Filter & Suche</strong><div class="muted">Suche in Frage/Antwort, Tags</div>
             </div>
-            <div class="flex">
-              <input id="search" placeholder="Suchen..." style="min-width:160px"/>
-              <select id="tagFilter">
-                <option value="">Alle Tags</option>
-              </select>
-              <label style="margin-left:6px"><input type="checkbox" id="onlyDue"/> Nur fällige</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input id="search" placeholder="Suchen..." style="min-width:180px"/>
+              <select id="tagFilter"><option value="">Alle Tags</option></select>
+              <label style="margin-left:8px"><input id="onlyDue" type="checkbox"/> Nur fällig</label>
             </div>
           </div>
         </div>
 
         <div class="card" style="margin-top:10px">
-          <strong>Vokabelliste</strong>
-          <div class="muted" style="font-size:13px;margin-top:6px">Klicke auf eine Vokabel zum bearbeiten oder auf ▶ um zu lernen.</div>
+          <strong>Karteikarten</strong>
+          <div class="muted" style="font-size:13px">Klicke Karte ➜ Bearbeiten • ▶ Lernen (nur diese)</div>
           <div id="list" class="list" style="margin-top:10px"></div>
         </div>
       </div>
 
-      <!-- Rechts: Editor / Practice -->
       <div>
         <div id="editor" class="card">
-          <strong id="editorTitle">Neue Vokabel</strong>
+          <strong id="editorTitle">Neue Karte</strong>
           <div style="margin-top:8px">
-            <label>Vorderseite (z.B. Deutsch)</label>
-            <input id="front" placeholder="z. B. Haus / der Hund" />
-            <label>Rückseite (z.B. Englisch)</label>
-            <input id="back" placeholder="z. B. house / dog" />
-            <label>Notiz (Beispiel, Aussprache)</label>
-            <textarea id="note" placeholder="z. B. Aussprache, Beispielsatz"></textarea>
+            <label>Frage / Vorderseite</label>
+            <input id="front" placeholder="z. B. Was ist die Hauptstadt von X?" />
+            <label>Antwort / Rückseite</label>
+            <textarea id="back" placeholder="z. B. Hauptstadt ..."></textarea>
+            <label>Notiz (z. B. Formel, Beispiele)</label>
+            <textarea id="note" placeholder="optional"></textarea>
             <label>Tags (Komma getrennt)</label>
-            <input id="tags" placeholder="z. B. Reisen, Uni" />
+            <input id="tags" placeholder="z. B. Mathe, Vokabeln" />
             <div style="margin-top:10px;display:flex;gap:8px">
               <button id="saveBtn">Speichern</button>
               <button id="newClear" class="ghost">Neu</button>
@@ -100,22 +88,21 @@
           </div>
         </div>
 
-        <div id="practicePanel" class="card center" style="margin-top:12px;display:none">
-          <!-- Lernmodus UI -->
-          <div class="practiceArea" style="width:100%">
-            <div class="spaced">
+        <div id="studyPanel" class="card center" style="margin-top:12px;display:none">
+          <div style="width:100%">
+            <div style="display:flex;justify-content:space-between;align-items:center">
               <div>
-                <strong id="practiceModeTitle">Lernmodus</strong>
-                <div class="muted small" id="practiceMeta">--</div>
+                <strong id="studyTitle">Lernmodus</strong>
+                <div class="muted small" id="studyMeta">--</div>
               </div>
               <div>
-                <button id="btnBackToList" class="ghost small">Zurück</button>
+                <button id="btnBack" class="ghost small">Zurück</button>
               </div>
             </div>
 
-            <div id="practiceCard" class="card center" style="min-height:160px;margin-top:8px">
+            <div id="studyCard" class="card center" style="min-height:180px;margin-top:8px">
               <div id="cardFront" class="big">--</div>
-              <div id="cardNote" class="muted small" style="margin-top:8px"></div>
+              <div id="cardNote" class="muted" style="margin-top:8px"></div>
             </div>
 
             <div class="answerBtns">
@@ -125,14 +112,38 @@
             <div id="answerArea" style="display:none;flex-direction:column;gap:8px">
               <div class="card" id="theAnswer" style="text-align:center;font-size:18px"></div>
               <div class="answerBtns">
-                <button id="btnCorrect" class="correct small">✔️ Korrekt</button>
-                <button id="btnWrong" class="wrong small">❌ Falsch</button>
+                <button id="btnCorrect" class="small" style="background:var(--good);border:none">✔ Korrekt</button>
+                <button id="btnWrong" class="small" style="background:var(--bad);border:none">❌ Falsch</button>
               </div>
             </div>
 
-            <div style="display:flex;justify-content:space-between;margin-top:6px">
+            <div style="display:flex;justify-content:space-between;margin-top:8px">
               <div class="muted small" id="progressInfo">--</div>
               <div class="muted small" id="statsInfo">--</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="quizPanel" class="card" style="margin-top:12px;display:none">
+          <strong>Quiz (Multiple Choice)</strong>
+          <div class="muted" style="font-size:13px">Wähle Anzahl Fragen und Zeitlimit pro Frage.</div>
+          <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+            <label style="min-width:120px">Fragen:</label>
+            <input id="quizCount" type="number" value="10" min="1" style="width:80px"/>
+            <label style="min-width:120px">Zeit / Frage (Sek.):</label>
+            <input id="quizTime" type="number" value="20" min="5" style="width:80px"/>
+            <button id="startQuiz" class="small">Start</button>
+          </div>
+
+          <div id="quizArea" style="margin-top:12px;display:none">
+            <div id="quizCard" class="card center" style="min-height:140px">
+              <div id="quizQ" class="big">Frage</div>
+              <div id="quizTimer" class="muted" style="margin-top:6px">Zeit:</div>
+            </div>
+            <div id="quizChoices" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px"></div>
+            <div style="display:flex;justify-content:space-between;margin-top:8px">
+              <div class="muted" id="quizProgress">0 / 0</div>
+              <div class="muted" id="quizScore">Score: 0</div>
             </div>
           </div>
         </div>
@@ -140,32 +151,31 @@
       </div>
     </div>
 
-    <footer>
-      Tipp: Exportiere regelmäßig (Export) oder nutze Import um die Datei zu laden. Die Daten liegen lokal in deinem Browser (localStorage).
-    </footer>
+    <footer>Die App speichert Karten lokal im Browser (localStorage). Nutze Export/Import für Backups.</footer>
+
+    <input id="fileInput" type="file" accept="application/json" style="display:none"/>
   </div>
 
-  <input id="fileInput" type="file" accept="application/json" style="display:none" />
-
 <script>
-/* Vokabeltrainer JS
-   - Speichert in localStorage unter key VOCAB_APP_DATA
-   - Datenmodell: { id, front, back, note, tags[], box(1-5), nextReview: ISOString, correct, wrong, created }
-   - SRS intervals (Tage) für box 1..5: [0,1,3,7,14] (simple)
+/* Simple Study Helper - saves to localStorage
+   Data model: { id, front, back, note, tags[], box(1-5), nextReview, correct, wrong, created }
 */
+const KEY = 'STUDY_HELPER_DATA_v1';
+const INTERVALS = [0,1,3,7,14];
 
-const STORAGE_KEY = 'VOCAB_APP_DATA_v1';
-const INTERVALS = [0,1,3,7,14]; // box idx: 1..5 maps to these days
+let cards = [];
+let currentEditId = null;
 
 // DOM
 const listEl = document.getElementById('list');
 const btnNew = document.getElementById('btnNew');
-const btnPractice = document.getElementById('btnPractice');
+const btnStudy = document.getElementById('btnStudy');
+const btnQuiz = document.getElementById('btnQuiz');
 const btnExport = document.getElementById('btnExport');
 const btnImport = document.getElementById('btnImport');
 const btnReset = document.getElementById('btnReset');
+const fileInput = document.getElementById('fileInput');
 
-const editorTitle = document.getElementById('editorTitle');
 const frontIn = document.getElementById('front');
 const backIn = document.getElementById('back');
 const noteIn = document.getElementById('note');
@@ -177,343 +187,256 @@ const searchIn = document.getElementById('search');
 const tagFilter = document.getElementById('tagFilter');
 const onlyDue = document.getElementById('onlyDue');
 
-const fileInput = document.getElementById('fileInput');
-
-// Practice
-const practicePanel = document.getElementById('practicePanel');
-const practiceCard = document.getElementById('practiceCard');
+const editor = document.getElementById('editor');
+const studyPanel = document.getElementById('studyPanel');
+const studyCard = document.getElementById('studyCard');
 const cardFront = document.getElementById('cardFront');
 const cardNote = document.getElementById('cardNote');
-const btnBackToList = document.getElementById('btnBackToList');
 const showAnswer = document.getElementById('showAnswer');
 const answerArea = document.getElementById('answerArea');
 const theAnswer = document.getElementById('theAnswer');
 const btnCorrect = document.getElementById('btnCorrect');
 const btnWrong = document.getElementById('btnWrong');
-const practiceMeta = document.getElementById('practiceMeta');
+const btnBack = document.getElementById('btnBack');
+const studyTitle = document.getElementById('studyTitle');
 const progressInfo = document.getElementById('progressInfo');
 const statsInfo = document.getElementById('statsInfo');
 
-let vocab = []; // in-memory
-let currentEditId = null;
-let practiceQueue = [];
-let currentIndex = 0;
-let currentCard = null;
+const quizPanel = document.getElementById('quizPanel');
+const quizCount = document.getElementById('quizCount');
+const quizTime = document.getElementById('quizTime');
+const startQuiz = document.getElementById('startQuiz');
+const quizArea = document.getElementById('quizArea');
+const quizQ = document.getElementById('quizQ');
+const quizChoices = document.getElementById('quizChoices');
+const quizTimer = document.getElementById('quizTimer');
+const quizProgress = document.getElementById('quizProgress');
+const quizScore = document.getElementById('quizScore');
 
-// ---------- Storage ----------
-function load() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(!raw) { vocab = []; save(); return; }
-    vocab = JSON.parse(raw) || [];
-  } catch(e) { console.error('Load error', e); vocab = []; }
+// load/save
+function load(){
+  try{ const raw = localStorage.getItem(KEY); cards = raw ? JSON.parse(raw) : []; }
+  catch(e){ cards = []; }
 }
-function save() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(vocab));
-}
+function save(){ localStorage.setItem(KEY, JSON.stringify(cards)); }
 
-// ---------- Helpers ----------
-function uid() { return Math.random().toString(36).slice(2,10); }
-function todayISO() { const d=new Date(); d.setHours(0,0,0,0); return d.toISOString(); }
-function daysFromNow(days) { const d=new Date(); d.setDate(d.getDate()+days); d.setHours(0,0,0,0); return d.toISOString(); }
-function isDue(item) {
-  if(!item.nextReview) return true;
-  return new Date(item.nextReview) <= (new Date());
-}
-function parseTags(s) {
-  return (s||'').split(',').map(t=>t.trim()).filter(t=>t);
-}
+// helpers
+function uid(){ return Math.random().toString(36).slice(2,9); }
+function todayISO(){ const d=new Date(); d.setHours(0,0,0,0); return d.toISOString(); }
+function daysFromNow(n){ const d=new Date(); d.setDate(d.getDate()+n); d.setHours(0,0,0,0); return d.toISOString(); }
+function isDue(c){ return !c.nextReview || new Date(c.nextReview) <= new Date(); }
+function parseTags(s){ return (s||'').split(',').map(x=>x.trim()).filter(Boolean); }
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=> ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-// create sample on first run
+// UI
 function ensureSample(){
-  if(vocab.length === 0){
-    vocab.push({
-      id: uid(),
-      front: 'Haus',
-      back: 'house',
-      note: 'das Haus -- plural: Häuser',
-      tags: ['Alltag'],
-      box: 1,
-      nextReview: todayISO(),
-      correct: 0, wrong: 0,
-      created: new Date().toISOString()
-    });
-    vocab.push({
-      id: uid(),
-      front: 'Danke',
-      back: 'thank you',
-      note: '',
-      tags: ['Höflichkeit'],
-      box: 2,
-      nextReview: daysFromNow(1),
-      correct: 1, wrong: 0,
-      created: new Date().toISOString()
-    });
+  if(cards.length===0){
+    cards.push({id:uid(),front:'Haus',back:'house',note:'das Haus',tags:['Vokabel'],box:1,nextReview:todayISO(),correct:0,wrong:0,created:new Date().toISOString()});
     save();
   }
 }
-
-// ---------- UI Rendering ----------
-function renderList() {
-  listEl.innerHTML = '';
+function renderList(){
+  listEl.innerHTML='';
   const q = (searchIn.value||'').toLowerCase();
-  const selectedTag = tagFilter.value;
+  const tag = tagFilter.value;
   const only = onlyDue.checked;
-  const filtered = vocab
-    .filter(item => {
-      if(q && !(item.front||'').toLowerCase().includes(q) && !(item.back||'').toLowerCase().includes(q) && !(item.note||'').toLowerCase().includes(q)) return false;
-      if(selectedTag && !(item.tags||[]).includes(selectedTag)) return false;
-      if(only && !isDue(item)) return false;
-      return true;
-    })
-    .sort((a,b)=> new Date(a.nextReview || 0) - new Date(b.nextReview || 0));
-  if(filtered.length === 0){
-    const p = document.createElement('div'); p.className='muted'; p.textContent='Keine Vokabeln gefunden.'; listEl.appendChild(p); return;
-  }
-  for(const it of filtered){
+  const filtered = cards.filter(c=>{
+    if(q && !(c.front||'').toLowerCase().includes(q) && !(c.back||'').toLowerCase().includes(q) && !(c.note||'').toLowerCase().includes(q)) return false;
+    if(tag && !(c.tags||[]).includes(tag)) return false;
+    if(only && !isDue(c)) return false;
+    return true;
+  }).sort((a,b)=> new Date(a.nextReview||0)-new Date(b.nextReview||0));
+  if(filtered.length===0){ listEl.innerHTML='<div class="muted">Keine Karten.</div>'; return; }
+  for(const c of filtered){
     const div = document.createElement('div'); div.className='item';
     const left = document.createElement('div');
-    const title = document.createElement('div'); title.innerHTML = `<strong>${escapeHtml(it.front)}</strong> -- <span class="muted">${escapeHtml(it.back)}</span>`;
-    const meta = document.createElement('div'); meta.className='meta';
-    meta.innerHTML = `Box ${it.box} • ${it.tags.map(t=>'<span class="tag">'+escapeHtml(t)+'</span>').join(' ')} • Nächste: ${it.nextReview ? (new Date(it.nextReview)).toLocaleDateString() : 'sofort'}`;
-    left.appendChild(title); left.appendChild(meta);
-    const right = document.createElement('div'); right.style.display='flex'; right.style.gap='8px'; right.style.alignItems='center';
-    const btnEdit = document.createElement('button'); btnEdit.textContent = '✏️'; btnEdit.title='Bearbeiten';
-    btnEdit.onclick = ()=> editItem(it.id);
-    const btnDel = document.createElement('button'); btnDel.textContent='🗑️'; btnDel.title='Löschen';
-    btnDel.onclick = ()=> { if(confirm('Vokabel löschen?')) { vocab = vocab.filter(x=>x.id!==it.id); save(); render(); } };
-    const btnLearn = document.createElement('button'); btnLearn.textContent='▶'; btnLearn.title='Lernen (nur diese)';
-    btnLearn.onclick = ()=> startPractice([it]);
+    left.innerHTML = `<strong>${escapeHtml(c.front)}</strong><div class="muted">${escapeHtml(c.back)}</div><div class="muted" style="margin-top:6px">Box ${c.box} • Tags: ${(c.tags||[]).join(', ')} • Nächste: ${c.nextReview? new Date(c.nextReview).toLocaleDateString() : 'sofort'}</div>`;
+    const right = document.createElement('div'); right.style.display='flex'; right.style.gap='6px';
+    const btnLearn = document.createElement('button'); btnLearn.textContent='▶'; btnLearn.title='Lernen (diese)'; btnLearn.onclick = ()=> startStudy([c]);
+    const btnEdit = document.createElement('button'); btnEdit.textContent='✏️'; btnEdit.onclick = ()=> editCard(c.id);
+    const btnDel = document.createElement('button'); btnDel.textContent='🗑️'; btnDel.onclick = ()=> { if(confirm('Löschen?')){ cards = cards.filter(x=>x.id!==c.id); save(); render(); } };
     right.appendChild(btnLearn); right.appendChild(btnEdit); right.appendChild(btnDel);
     div.appendChild(left); div.appendChild(right);
     listEl.appendChild(div);
   }
-}
-
-function populateTagFilter(){
-  const tags = new Set();
-  for(const it of vocab) (it.tags||[]).forEach(t=>tags.add(t));
-  tagFilter.innerHTML = '<option value="">Alle Tags</option>';
-  Array.from(tags).sort().forEach(t=>{
-    const opt = document.createElement('option'); opt.value=t; opt.textContent=t; tagFilter.appendChild(opt);
-  });
-}
-
-function render(){
-  renderList();
   populateTagFilter();
-  updateStats();
+}
+function populateTagFilter(){
+  const s = new Set(); cards.forEach(c=> (c.tags||[]).forEach(t=>s.add(t)));
+  tagFilter.innerHTML = '<option value="">Alle Tags</option>';
+  Array.from(s).sort().forEach(t=>{ const o = document.createElement('option'); o.value=t; o.textContent=t; tagFilter.appendChild(o); });
 }
 
-// ---------- Editor ----------
-btnNew.addEventListener('click', ()=>{ currentEditId = null; editorTitle.textContent='Neue Vokabel'; frontIn.value=''; backIn.value=''; noteIn.value=''; tagsIn.value=''; frontIn.focus(); });
+// Editor
+btnNew.addEventListener('click', ()=>{ currentEditId=null; document.getElementById('editorTitle').textContent='Neue Karte'; frontIn.value=''; backIn.value=''; noteIn.value=''; tagsIn.value=''; frontIn.focus(); });
 
 saveBtn.addEventListener('click', ()=>{
-  const front = frontIn.value.trim();
-  const back = backIn.value.trim();
-  if(!front || !back) { alert('Front und Rückseite müssen ausgefüllt sein.'); return; }
-  const tags = parseTags(tagsIn.value);
+  const f = frontIn.value.trim(); const b = backIn.value.trim();
+  if(!f || !b) { alert('Frage und Antwort ausfüllen.'); return; }
+  const t = parseTags(tagsIn.value);
   if(currentEditId){
-    const it = vocab.find(x=>x.id===currentEditId);
+    const it = cards.find(x=>x.id===currentEditId);
     if(!it) return;
-    it.front = front; it.back = back; it.note = noteIn.value.trim(); it.tags = tags;
+    it.front=f; it.back=b; it.note=noteIn.value.trim(); it.tags=t;
   } else {
-    const item = {
-      id: uid(), front, back, note: noteIn.value.trim(), tags,
-      box: 1, nextReview: todayISO(), correct:0, wrong:0, created: new Date().toISOString()
-    };
-    vocab.push(item);
+    cards.push({ id:uid(), front:f, back:b, note:noteIn.value.trim(), tags:t, box:1, nextReview:todayISO(), correct:0, wrong:0, created:new Date().toISOString() });
   }
-  save();
-  render();
-  currentEditId = null;
-  editorTitle.textContent='Neue Vokabel';
-  frontIn.value=''; backIn.value=''; noteIn.value=''; tagsIn.value='';
+  save(); renderList();
+  currentEditId=null; document.getElementById('editorTitle').textContent='Neue Karte'; frontIn.value=''; backIn.value=''; noteIn.value=''; tagsIn.value='';
 });
+newClear.addEventListener('click', ()=>{ currentEditId=null; document.getElementById('editorTitle').textContent='Neue Karte'; frontIn.value=''; backIn.value=''; noteIn.value=''; tagsIn.value=''; });
 
-newClear.addEventListener('click', ()=>{ currentEditId = null; editorTitle.textContent='Neue Vokabel'; frontIn.value=''; backIn.value=''; noteIn.value=''; tagsIn.value=''; });
-
-// Edit load
-function editItem(id){
-  const it = vocab.find(x=>x.id===id);
-  if(!it) return;
-  currentEditId = id;
-  editorTitle.textContent='Vokabel bearbeiten';
-  frontIn.value = it.front;
-  backIn.value = it.back;
-  noteIn.value = it.note || '';
-  tagsIn.value = (it.tags||[]).join(', ');
+function editCard(id){
+  const c = cards.find(x=>x.id===id); if(!c) return;
+  currentEditId = id; document.getElementById('editorTitle').textContent='Karte bearbeiten';
+  frontIn.value = c.front; backIn.value = c.back; noteIn.value = c.note || ''; tagsIn.value = (c.tags||[]).join(', ');
 }
 
-// ---------- Practice ----------
-btnPractice.addEventListener('click', ()=> startPractice());
-
-function startPractice(specificList){
-  // build queue
-  let pool = vocab.slice();
-  // prefer due items
-  pool.sort((a,b)=>{
-    const da = isDue(a) ? 0 : 1;
-    const db = isDue(b) ? 0 : 1;
-    return da - db || new Date(a.nextReview) - new Date(b.nextReview);
-  });
-  if(specificList && specificList.length>0) pool = specificList.slice();
-  if(pool.length === 0){ alert('Keine Vokabeln vorhanden.'); return; }
-  practiceQueue = pool.filter(Boolean);
-  currentIndex = 0;
-  showPracticeUI();
-  nextCard();
-}
-
-function showPracticeUI(){
+// Study (Leitner simple)
+let studyQueue = []; let studyIndex = 0; let currentCard = null;
+btnStudy.addEventListener('click', ()=> startStudy());
+function startStudy(specific){
+  let pool = cards.slice().sort((a,b)=> isDue(a)? -1 : 1);
+  if(specific && specific.length) pool = specific.slice();
+  if(pool.length===0){ alert('Keine Karten vorhanden.'); return; }
+  studyQueue = pool;
+  studyIndex = 0;
   document.getElementById('editor').style.display='none';
-  practicePanel.style.display='block';
-  document.getElementById('list').closest('.card').style.display='none';
-  document.getElementById('practiceModeTitle').textContent = 'Lernmodus';
+  studyPanel.style.display='block';
+  nextStudyCard();
 }
-
-btnBackToList.addEventListener('click', ()=> {
-  hidePracticeUI();
-});
-
-function hidePracticeUI(){
-  practicePanel.style.display='none';
-  document.getElementById('editor').style.display='block';
-  document.getElementById('list').closest('.card').style.display='block';
-}
-
-function nextCard(){
-  if(currentIndex >= practiceQueue.length){
-    // finished
-    cardFront.textContent = 'Fertig 🎉';
-    cardNote.textContent = '';
-    answerArea.style.display='none';
-    showAnswer.style.display='none';
-    progressInfo.textContent = `0 / ${practiceQueue.length}`;
-    statsInfo.textContent = '';
-    return;
+function nextStudyCard(){
+  if(studyIndex >= studyQueue.length){ // finished
+    cardFront.textContent = 'Fertig 🎉'; cardNote.textContent='Gut gemacht!'; answerArea.style.display='none'; showAnswer.style.display='none'; progressInfo.textContent = `0 / ${studyQueue.length}`; return;
   }
-  currentCard = practiceQueue[currentIndex];
-  cardFront.textContent = currentCard.front;
-  cardNote.textContent = currentCard.note || '';
-  theAnswer.textContent = '';
-  answerArea.style.display='none';
-  showAnswer.style.display='inline-block';
-  updatePracticeMeta();
-  progressInfo.textContent = `${currentIndex+1} / ${practiceQueue.length} (fällig: ${practiceQueue.filter(isDue).length})`;
-  statsInfo.textContent = `Korrekt: ${currentCard.correct} • Falsch: ${currentCard.wrong} • Box: ${currentCard.box}`;
+  currentCard = studyQueue[studyIndex];
+  cardFront.textContent = currentCard.front; cardNote.textContent = currentCard.note || ''; theAnswer.textContent=''; answerArea.style.display='none'; showAnswer.style.display='inline-block';
+  progressInfo.textContent = `${studyIndex+1} / ${studyQueue.length}`;
+  statsInfo.textContent = `Korrekt: ${currentCard.correct||0} • Falsch: ${currentCard.wrong||0} • Box: ${currentCard.box||1}`;
 }
+showAnswer.addEventListener('click', ()=>{ theAnswer.textContent = currentCard.back; answerArea.style.display='flex'; showAnswer.style.display='none'; });
+btnCorrect.addEventListener('click', ()=> markStudy(true));
+btnWrong.addEventListener('click', ()=> markStudy(false));
+btnBack.addEventListener('click', ()=> { studyPanel.style.display='none'; document.getElementById('editor').style.display='block'; });
 
-showAnswer.addEventListener('click', ()=>{
-  theAnswer.textContent = currentCard.back;
-  answerArea.style.display='flex';
-  showAnswer.style.display='none';
-});
-
-btnCorrect.addEventListener('click', ()=> {
-  markAnswer(true);
-});
-btnWrong.addEventListener('click', ()=> {
-  markAnswer(false);
-});
-
-function markAnswer(correct){
+function markStudy(correct){
   if(!currentCard) return;
-  if(correct){
-    currentCard.correct = (currentCard.correct||0)+1;
-    currentCard.box = Math.min(5, (currentCard.box||1) + 1);
-  } else {
-    currentCard.wrong = (currentCard.wrong||0)+1;
-    currentCard.box = Math.max(1, (currentCard.box||1) - 1);
-  }
-  // schedule next review using INTERVALS
-  const days = INTERVALS[Math.max(0, Math.min(4, currentCard.box-1))] || 0;
+  if(correct){ currentCard.correct = (currentCard.correct||0) + 1; currentCard.box = Math.min(5, (currentCard.box||1) + 1); }
+  else { currentCard.wrong = (currentCard.wrong||0) + 1; currentCard.box = Math.max(1, (currentCard.box||1) - 1); }
+  const days = INTERVALS[Math.max(0,Math.min(4,(currentCard.box||1)-1))] || 0;
   currentCard.nextReview = daysFromNow(days);
   save();
-  currentIndex++;
-  nextCard();
+  studyIndex++; nextStudyCard();
 }
 
-function updatePracticeMeta(){
-  practiceMeta.textContent = `Word: ${currentCard.front} • Tags: ${(currentCard.tags||[]).join(', ')}`;
-  progressInfo.textContent = `${currentIndex+1} / ${practiceQueue.length}`;
+// Quiz (multiple choice)
+btnQuiz.addEventListener('click', ()=>{ quizPanel.style.display = quizPanel.style.display==='none' ? 'block' : 'none'; });
+startQuiz.addEventListener('click', ()=> runQuiz());
+
+let quizState = null; let quizTimerInterval = null;
+
+function runQuiz(){
+  const count = Math.max(1, Math.min(100, parseInt(quizCount.value||10)));
+  const timePer = Math.max(5, parseInt(quizTime.value||20));
+  if(cards.length < 2){ alert('Mindestens 2 Karten erforderlich für Quiz.'); return; }
+  // pick random unique questions
+  const pool = shuffle(cards.slice());
+  const questions = pool.slice(0, Math.min(count, pool.length));
+  quizState = { q: questions, idx:0, score:0, timePer, total:questions.length };
+  document.getElementById('editor').style.display='none';
+  quizArea.style.display='block';
+  setupQuizQuestion();
 }
 
-// ---------- Import / Export ----------
+function setupQuizQuestion(){
+  const s = quizState;
+  if(!s || s.idx >= s.total){ finishQuiz(); return; }
+  const card = s.q[s.idx];
+  quizQ.textContent = card.front;
+  // choices: correct back + 3 random backs
+  const others = cards.filter(c=>c.id !== card.id);
+  const choices = [card.back];
+  shuffle(others);
+  for(let i=0;i<3 && i<others.length;i++) choices.push(others[i].back);
+  shuffle(choices);
+  quizChoices.innerHTML = '';
+  choices.forEach(ch=>{
+    const b = document.createElement('button'); b.className='small'; b.style.textAlign='left'; b.textContent = ch;
+    b.onclick = ()=> { if(ch === card.back){ s.score++; quizScore.textContent = 'Score: ' + s.score; } nextQuizQuestion(); };
+    quizChoices.appendChild(b);
+  });
+  quizProgress.textContent = `${s.idx+1} / ${s.total}`;
+  quizTimer.textContent = `Zeit: ${s.timePer}s`;
+  // timer
+  let remaining = s.timePer;
+  clearInterval(quizTimerInterval);
+  quizTimerInterval = setInterval(()=> { remaining--; quizTimer.textContent = `Zeit: ${remaining}s`; if(remaining<=0){ clearInterval(quizTimerInterval); nextQuizQuestion(); } }, 1000);
+}
+
+function nextQuizQuestion(){
+  clearInterval(quizTimerInterval);
+  quizState.idx++; setupQuizQuestion();
+}
+
+function finishQuiz(){
+  clearInterval(quizTimerInterval);
+  alert('Quiz beendet. Score: ' + (quizState.score||0) + ' / ' + quizState.total);
+  quizState = null;
+  quizArea.style.display='none';
+  document.getElementById('editor').style.display='block';
+}
+
+// Import/Export
 btnExport.addEventListener('click', ()=>{
-  const data = { exportedAt: new Date().toISOString(), vocab };
-  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const data = { exportedAt: new Date().toISOString(), cards };
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'vocab_backup_' + (new Date().toISOString().slice(0,10)) + '.json';
-  a.click();
-  URL.revokeObjectURL(url);
+  const a = document.createElement('a'); a.href = url; a.download = 'study_backup_' + new Date().toISOString().slice(0,10) + '.json'; a.click(); URL.revokeObjectURL(url);
 });
-
 btnImport.addEventListener('click', ()=> fileInput.click());
-fileInput.addEventListener('change', async (e)=>{
+fileInput.addEventListener('change', async (e) => {
   const f = e.target.files[0]; if(!f) return;
   try {
     const txt = await f.text();
     const parsed = JSON.parse(txt);
-    if(parsed && parsed.vocab && Array.isArray(parsed.vocab)){
-      if(confirm('Importiert wird eine Datei mit ' + parsed.vocab.length + ' Einträgen. Anhängen statt überschreiben? OK = anhängen, Abbrechen = überschreiben')) {
-        // append but avoid id collision
-        const existingIds = new Set(vocab.map(x=>x.id));
-        for(const it of parsed.vocab){
-          if(existingIds.has(it.id)) it.id = uid();
-          vocab.push(it);
+    if(parsed && Array.isArray(parsed.cards || parsed.cards === undefined ? parsed.cards : parsed.cards )){
+      const list = parsed.cards || parsed.cards; // fallback
+      if(!Array.isArray(list) && parsed.cards && Array.isArray(parsed.cards)) list = parsed.cards;
+      if(!Array.isArray(list)) {
+        // try older format: parsed.cards may be undefined, try parsed directly
+        if(Array.isArray(parsed)) list = parsed;
+      }
+      if(!list || !Array.isArray(list)){ alert('Ungültiges Format.'); fileInput.value=''; return; }
+      if(confirm('Anhängen (OK) oder Überschreiben (Abbrechen)?')) {
+        // append avoiding id collisions
+        const existing = new Set(cards.map(c=>c.id));
+        for(const it of list){
+          if(!it.id) it.id = uid();
+          if(existing.has(it.id)) it.id = uid();
+          cards.push(it);
         }
       } else {
-        vocab = parsed.vocab;
+        cards = list.map(it => it.id ? it : {...it, id: uid()});
       }
-      save(); render();
-      alert('Import erfolgreich.');
+      save(); renderList(); alert('Import erfolgreich.');
     } else {
-      alert('Ungültiges Format: Datei enthält kein vocab Array.');
+      alert('Unbekanntes Format.');
     }
-  } catch(err) {
-    alert('Import-Fehler: ' + err.message);
-  } finally {
-    fileInput.value = '';
-  }
+  } catch(err){ alert('Import Fehler: ' + err.message); } finally { fileInput.value=''; }
 });
 
-// Reset (delete all)
-btnReset.addEventListener('click', ()=>{
-  if(confirm('Alle Vokabeln löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) {
-    vocab = []; save(); render();
-    alert('Gelöscht.');
-  }
-});
+// Reset
+btnReset.addEventListener('click', ()=> { if(confirm('Alle Karten löschen?')){ cards=[]; save(); renderList(); } });
 
-// ---------- Utility & Stats ----------
-function updateStats(){
-  const total = vocab.length;
-  const due = vocab.filter(isDue).length;
-  const mastered = vocab.filter(v=>v.box>=4).length;
-  document.getElementById('practiceModeTitle').textContent = `Lernen -- ${due} fällig / ${total} gesamt`;
-  // small stats area
-  const totalCorrect = vocab.reduce((s,i)=>s + (i.correct||0), 0);
-  const totalWrong = vocab.reduce((s,i)=>s + (i.wrong||0), 0);
-  // statsInfo may be used in practice
-  statsInfo.textContent = `Gesamt: ${total} • Fällig: ${due} • ✔ ${totalCorrect} / ✖ ${totalWrong}`;
-}
+// util
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]] } return a; }
 
-function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=> ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+// init
+load(); ensureSample(); renderList();
 
-// Search and filter bindings
 searchIn.addEventListener('input', renderList);
 tagFilter.addEventListener('change', renderList);
 onlyDue.addEventListener('change', renderList);
-
-// click list area to show editor if click on header area etc.
-document.getElementById('list').addEventListener('click', ()=>{ /* noop */ });
-
-// init
-load();
-ensureSample();
-render();
 
 </script>
 </body>
