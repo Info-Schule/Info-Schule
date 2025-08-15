@@ -3,107 +3,139 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KI-Präsentation Hugging Face</title>
+<title>Dadish-Klon – 20 Level</title>
 <style>
-  body, html {margin:0; padding:0; font-family:sans-serif; background:#1e1e2f; color:#fff;}
-  .slide {display:none; padding:40px; min-height:100vh; box-sizing:border-box;}
-  .slide.active {display:block;}
-  h1 {font-size:36px; margin-bottom:20px;}
-  p {font-size:20px;}
-  #nav {position:fixed; bottom:20px; left:50%; transform:translateX(-50%);}
-  button {padding:10px 20px; font-size:16px; margin:0 5px; cursor:pointer;}
-  #inputSection {padding:50px; text-align:center;}
-  input {padding:10px; font-size:18px; width:300px;}
-  #generateBtn {padding:10px 20px; font-size:18px; margin-left:10px; cursor:pointer;}
-  
-  /* Loading Animation */
-  #loading {display:none; text-align:center; margin-top:50px;}
-  .dot {display:inline-block; width:15px; height:15px; margin:5px; background:#fff; border-radius:50%; animation: bounce 1s infinite;}
-  .dot:nth-child(2){animation-delay:0.2s;}
-  .dot:nth-child(3){animation-delay:0.4s;}
-  @keyframes bounce {
-    0%, 80%, 100% { transform: scale(0); }
-    40% { transform: scale(1); }
-  }
+  body { margin:0; font-family:sans-serif; background:#87ceeb; }
+  #menu, #game { display:none; text-align:center; padding-top:30px; }
+  button { padding:10px 20px; font-size:16px; margin:5px; cursor:pointer; }
+  canvas { display:block; margin:0 auto; background:#87ceeb; border:2px solid #000; }
 </style>
 </head>
 <body>
 
-<div id="inputSection">
-  <h1>KI-Präsentation Generator</h1>
-  <input type="text" id="topic" placeholder="Thema eingeben">
-  <button id="generateBtn">Generieren</button>
-  <p style="font-size:14px; margin-top:10px;">Die KI erzeugt für jede Folie automatisch Text.</p>
+<div id="menu">
+  <h1>Mein Dadish-Klon</h1>
+  <div id="levelButtons"></div>
 </div>
 
-<div id="loading">
-  <p>Die KI generiert deine Präsentation…</p>
-  <div class="dot"></div>
-  <div class="dot"></div>
-  <div class="dot"></div>
+<div id="game">
+  <canvas id="gameCanvas" width="800" height="400"></canvas>
+  <p id="story"></p>
+  <button onclick="showMenu()">Zurück zum Menü</button>
 </div>
 
-<div id="presentation"></div>
-
-<div id="nav">
-  <button id="prevBtn">← Zurück</button>
-  <button id="nextBtn">Weiter →</button>
-</div>
-
+<script src="game.js"></script>
 <script>
-const presentation = document.getElementById('presentation');
-const prevBtn = document.getElementById('prevBtn');
-const nextBtn = document.getElementById('nextBtn');
-const loading = document.getElementById('loading');
-let currentSlide = 0;
+const menu = document.getElementById('menu');
+const game = document.getElementById('game');
+const levelButtonsDiv = document.getElementById('levelButtons');
 
-function showSlide(index){
-  const slides = document.querySelectorAll('.slide');
-  slides.forEach(s => s.classList.remove('active'));
-  if(slides[index]) slides[index].classList.add('active');
-  currentSlide = index;
+for(let i=1;i<=20;i++){
+  let btn = document.createElement('button');
+  btn.textContent = 'Level '+i;
+  btn.onclick = ()=>startGame(i);
+  levelButtonsDiv.appendChild(btn);
 }
 
-prevBtn.onclick = () => showSlide(currentSlide -1);
-nextBtn.onclick = () => showSlide(currentSlide +1);
-
-// Hugging Face Text Generation (öffentliches Modell, kein API-Key nötig)
-async function generateText(prompt) {
-  const response = await fetch("https://api-inference.huggingface.co/models/gpt2", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ inputs: prompt, options: { wait_for_model: true, use_cache: true } })
-  });
-  const data = await response.json();
-  if (data.error) return "Fehler beim Generieren";
-  return data[0].generated_text;
+function showMenu(){
+  game.style.display='none';
+  menu.style.display='block';
 }
-
-document.getElementById('generateBtn').onclick = async () => {
-  const topic = document.getElementById('topic').value.trim();
-  if(!topic) return alert('Bitte ein Thema eingeben.');
-  
-  document.getElementById('inputSection').style.display = 'none';
-  loading.style.display = 'block';
-  presentation.innerHTML = '';
-
-  const slidesTitles = ["Einführung", "Hintergrund", "Hauptpunkte", "Beispiele", "Fazit"];
-
-  for(let title of slidesTitles){
-    const prompt = `Schreibe einen kurzen Präsentationstext über "${topic}" für die Folie "${title}".`;
-    const text = await generateText(prompt);
-
-    const div = document.createElement('div');
-    div.className = 'slide';
-    div.innerHTML = `<h1>${title}</h1><p>${text}</p>
-      <img src="https://source.unsplash.com/800x400/?${encodeURIComponent(topic)}&sig=${Math.floor(Math.random()*1000)}" alt="${topic}">`;
-    presentation.appendChild(div);
-  }
-
-  loading.style.display = 'none';
-  showSlide(0);
-};
+function startGame(level){
+  menu.style.display='none';
+  game.style.display='block';
+  initGame(level);
+}
+menu.style.display='block';
 </script>
 
 </body>
 </html>
+let canvas = document.getElementById('gameCanvas');
+let ctx = canvas.getContext('2d');
+
+let player = { x:50, y:300, width:30, height:30, dy:0, onGround:true };
+let keys = {};
+let level = 1;
+
+// Level-Daten
+const levels = [];
+for(let i=1;i<=20;i++){
+  levels.push({
+    story: `Level ${i}: Dein Abenteuer geht weiter!`,
+    platforms: [
+      {x:0,y:330,width:800,height:70},
+      {x:150+i*5, y:250, width:100, height:20},
+      {x:350+i*5, y:200, width:100, height:20}
+    ],
+    collectibles: [
+      {x:180+i*5, y:220, width:20, height:20},
+      {x:380+i*5, y:170, width:20, height:20}
+    ]
+  });
+}
+
+document.addEventListener('keydown', e => keys[e.key]=true);
+document.addEventListener('keyup', e => keys[e.key]=false);
+
+function initGame(lvl){
+  level = lvl;
+  player.x = 50; player.y = 300; player.dy=0; player.onGround=true;
+  document.getElementById('story').textContent = levels[level-1].story;
+  gameLoop();
+}
+
+function gameLoop(){
+  update();
+  draw();
+  requestAnimationFrame(gameLoop);
+}
+
+function update(){
+  // Gravity
+  if(!player.onGround) player.dy += 0.8;
+  player.y += player.dy;
+
+  // Boden & Plattformen
+  player.onGround = false;
+  levels[level-1].platforms.forEach(p=>{
+    if(player.x+player.width > p.x && player.x < p.x+p.width && player.y+player.height >= p.y && player.y+player.height <= p.y+10){
+      player.y = p.y - player.height;
+      player.dy = 0;
+      player.onGround = true;
+    }
+  });
+
+  // Bewegung
+  if(keys['ArrowRight']) player.x +=5;
+  if(keys['ArrowLeft']) player.x -=5;
+  if(keys['ArrowUp'] && player.onGround){ player.dy=-15; player.onGround=false; }
+
+  // Sammelobjekte
+  levels[level-1].collectibles = levels[level-1].collectibles.filter(c=>{
+    if(player.x+player.width > c.x && player.x < c.x+c.width && player.y+player.height > c.y && player.y < c.y+c.height){
+      return false; // gesammelt
+    }
+    return true;
+  });
+}
+
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // Hintergrund
+  ctx.fillStyle = "#87ceeb";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  // Plattformen
+  ctx.fillStyle="#654321";
+  levels[level-1].platforms.forEach(p=> ctx.fillRect(p.x,p.y,p.width,p.height));
+
+  // Sammelobjekte
+  ctx.fillStyle="#ff0";
+  levels[level-1].collectibles.forEach(c=> ctx.fillRect(c.x,c.y,c.width,c.height));
+
+  // Spieler
+  ctx.fillStyle="#ff0000";
+  ctx.fillRect(player.x,player.y,player.width,player.height);
+}
