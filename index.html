@@ -167,6 +167,18 @@ button:hover{
   color:#555;
   display:flex;justify-content:space-between;
 }
+
+/* --- Richtig / Falsch Buttons --- */
+#answerButtons button{
+  font-size: 1.2em;
+  padding: 10px 20px;
+}
+#answerButtons button.correct{
+  background: #2ecc71;
+}
+#answerButtons button.wrong{
+  background: #e74c3c;
+}
 </style>
 </head>
 <body>
@@ -203,16 +215,16 @@ button:hover{
       <div class="back" id="cardBack"></div>
     </div>
   </div>
-  <div style="margin-top:10px; display:flex; justify-content:center; gap:20px;">
-    <button onclick="answer(true)" style="font-size:1.5em; background:green;">✅</button>
-    <button onclick="answer(false)" style="font-size:1.5em; background:red;">❌</button>
-  </div>
   <div>
     <input type="text" id="frontInput" placeholder="Französisch">
     <input type="text" id="backInput" placeholder="Deutsch">
     <button onclick="addVocab()">Hinzufügen</button>
   </div>
   <div id="vocabList"></div>
+  <div id="answerButtons">
+    <button class="correct" onclick="answer(true)">✔️</button>
+    <button class="wrong" onclick="answer(false)">❌</button>
+  </div>
   <div class="progress" id="progress"></div>
   <div class="level" id="levelDisplay"></div>
   <div class="streak" id="streakDisplay"></div>
@@ -256,51 +268,56 @@ let currentIndex=0;
 let flipped=false;
 
 function saveFolders(){localStorage.setItem('folders',JSON.stringify(folders));}
-function renderFolders(){
-  const list = document.getElementById('folderList');
-  list.innerHTML='';
-  let keys = Object.keys(folders);
-  keys.forEach((name,i)=>{
-    const div = document.createElement('div');
-    div.style.display='flex';
-    div.style.alignItems='center';
-    div.style.marginBottom='6px';
-    
-    const btn = document.createElement('button');
-    btn.innerText=name;
-    btn.onclick=()=>openFolder(name);
-    btn.style.flex='1';
-    
-    const upBtn = document.createElement('button');
-    upBtn.innerText='⬆️';
-    upBtn.onclick=()=>moveFolder(name,-1);
-    
-    const downBtn = document.createElement('button');
-    downBtn.innerText='⬇️';
-    downBtn.onclick=()=>moveFolder(name,1);
-    
-    const delBtn = document.createElement('button');
-    delBtn.innerText='🗑️';
-    delBtn.onclick=()=>deleteFolder(name);
-    
-    div.appendChild(btn);
-    div.appendChild(upBtn);
-    div.appendChild(downBtn);
-    div.appendChild(delBtn);
-    list.appendChild(div);
-  });
+
+// Verschieben
+function moveFolder(name, direction){
+  const keys = Object.keys(folders);
+  const index = keys.indexOf(name);
+  if(index<0) return;
+  const newIndex = index + direction;
+  if(newIndex<0 || newIndex>=keys.length) return;
+  const newKeys = [...keys];
+  [newKeys[index], newKeys[newIndex]] = [newKeys[newIndex], newKeys[index]];
+  const newFolders = {};
+  newKeys.forEach(k=>newFolders[k]=folders[k]);
+  folders=newFolders;
+  saveFolders();
+  renderFolders();
 }
 
-function createFolder(){
-  let name=document.getElementById('newFolderName').value.trim();
-  if(name && !folders[name]){
-    folders[name]=[];
+// Löschen
+function deleteFolder(name){
+  if(confirm(`Ordner "${name}" löschen?`)){
+    delete folders[name];
     saveFolders();
     renderFolders();
-    document.getElementById('newFolderName').value='';
+    if(currentFolder===name){
+      document.getElementById('trainerSection').style.display='none';
+    }
   }
 }
 
-function moveFolder(name,direction){
-  let keys=Object.keys(folders);
-  let idx=keys.indexOf(name
+function renderFolders(){
+  const list = document.getElementById('folderList');
+  list.innerHTML = '';
+  Object.keys(folders).forEach(name=>{
+    const div=document.createElement('div');
+    div.style.display='flex';
+    div.style.alignItems='center';
+    div.style.marginBottom='6px';
+
+    const btn=document.createElement('button');
+    btn.innerText=name;
+    btn.addEventListener('click', ()=>openFolder(name));
+    btn.style.flex='1';
+
+    const upBtn=document.createElement('button');
+    upBtn.innerText='⬆️';
+    upBtn.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      moveFolder(name,-1);
+    });
+
+    const downBtn=document.createElement('button');
+    downBtn.innerText='⬇️';
+    downBtn.addEventListener
