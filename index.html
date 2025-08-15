@@ -3,441 +3,287 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Study Helper -- Lernkarten & Quiz</title>
+<title>Präsentation: Donald J. Trump</title>
 <style>
   :root{
-    --bg:#0b1220; --card:#071427; --accent:#57d0ff; --muted:#9fb3c9;
-    --good:#8ee08a; --bad:#ff7b7b;
+    --bg:#061425; --panel:#0d2330; --accent:#62d0ff; --muted:#9fbecf;
   }
-  html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#02101a,#072231);color:#eaf6ff}
-  .wrap{max-width:980px;margin:18px auto;padding:14px}
-  header{display:flex;align-items:center;justify-content:space-between;gap:12px}
-  h1{margin:0;font-size:20px}
-  .controls{display:flex;gap:8px;flex-wrap:wrap}
-  button{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--accent);padding:8px 10px;border-radius:8px;font-weight:700;cursor:pointer}
-  .ghost{border:1px dashed rgba(255,255,255,0.03);color:var(--muted)}
-  .grid{display:grid;grid-template-columns:1fr 360px;gap:14px;margin-top:14px}
-  @media(max-width:900px){ .grid{grid-template-columns:1fr} }
-  .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.04);padding:12px;border-radius:12px}
-  .list{max-height:60vh;overflow:auto;padding:8px;display:flex;flex-direction:column;gap:8px}
-  .item{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.02)}
-  label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
-  input,textarea,select{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);padding:8px;border-radius:8px;color:#eaf6ff;width:100%}
-  textarea{min-height:68px;resize:vertical}
-  .muted{color:var(--muted)}
-  .big{font-size:18px}
-  .center{display:grid;place-items:center}
-  .answerBtns{display:flex;gap:8px;justify-content:center;margin-top:8px}
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#041428,#071726);color:#eaf6ff}
+  .stage{height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box}
+  .slide{width:100%;max-width:1100px;height:78vh;background:rgba(6,12,18,0.96);border-radius:12px;padding:28px;box-sizing:border-box;border:1px solid rgba(255,255,255,0.03);display:none;flex-direction:column}
+  .slide.active{display:flex}
+  .title{font-size:30px;font-weight:800;margin-bottom:6px}
+  .subtitle{color:var(--muted);margin-bottom:16px}
+  .content{flex:1;display:flex;gap:18px}
+  .col{flex:1;min-width:0}
+  .image{flex:1;display:flex;align-items:center;justify-content:center}
+  .image img{max-width:100%;max-height:64vh;border-radius:8px;border:1px solid rgba(255,255,255,0.03)}
+  .bullets{font-size:18px;line-height:1.6}
+  .footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px;color:var(--muted);font-size:13px}
+  .nav{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;display:flex;gap:12px}
+  .btn{background:var(--panel);border:1px solid rgba(255,255,255,0.03);color:var(--accent);padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:700}
   .small{font-size:13px;padding:6px 8px}
-  .tag{background:#082532;padding:6px 8px;border-radius:999px;color:var(--muted);font-size:12px;margin-right:6px}
-  footer{margin-top:18px;color:var(--muted);font-size:13px}
+  .notes{margin-top:12px;padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);color:var(--muted);font-size:13px;max-height:96px;overflow:auto}
+  .cite{color:var(--muted);font-size:13px}
+  @media (max-width:900px){
+    .content{flex-direction:column}
+    .image img{max-height:36vh}
+    .title{font-size:22px}
+  }
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <h1>Study Helper -- Karteikarten & Quiz</h1>
-      <div class="controls">
-        <button id="btnNew">➕ Karte</button>
-        <button id="btnStudy">▶ Lernen</button>
-        <button id="btnQuiz">🧪 Quiz</button>
-        <button id="btnExport">⬇ Export</button>
-        <button id="btnImport" class="ghost">⬆ Import</button>
-        <button id="btnReset" class="ghost">🗑️ Reset</button>
-      </div>
-    </header>
+  <div class="stage">
 
-    <div class="grid">
+    <!-- SLIDE 0: TITEL -->
+    <section class="slide active" id="s0" aria-live="polite">
       <div>
-        <div class="card">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <div>
-              <strong>Filter & Suche</strong><div class="muted">Suche in Frage/Antwort, Tags</div>
-            </div>
-            <div style="display:flex;gap:8px;align-items:center">
-              <input id="search" placeholder="Suchen..." style="min-width:180px"/>
-              <select id="tagFilter"><option value="">Alle Tags</option></select>
-              <label style="margin-left:8px"><input id="onlyDue" type="checkbox"/> Nur fällig</label>
-            </div>
-          </div>
+        <div class="title">Donald J. Trump</div>
+        <div class="subtitle">Kurzbiographie -- Karriere -- Präsidentschaft</div>
+      </div>
+
+      <div class="content" style="align-items:center">
+        <div class="col bullets">
+          <ul>
+            <li><strong>Donald John Trump</strong>, US‑Geschäftsmann, TV‑Persönlichkeit und Politiker.</li>
+            <li>Geboren: <strong>14. Juni 1946</strong> in Queens, New York. <span class="cite">Quelle: White House History.</span></li>
+            <li>Ausbildung: New York Military Academy; Wharton School (University of Pennsylvania).</li>
+          </ul>
         </div>
 
-        <div class="card" style="margin-top:10px">
-          <strong>Karteikarten</strong>
-          <div class="muted" style="font-size:13px">Klicke Karte ➜ Bearbeiten • ▶ Lernen (nur diese)</div>
-          <div id="list" class="list" style="margin-top:10px"></div>
+        <div class="image">
+          <!-- Official White House portrait (2017) -- Wikimedia Commons -->
+          <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Donald_Trump_official_portrait.jpg" alt="Donald Trump official portrait (2017)">
         </div>
       </div>
 
+      <div class="footer">
+        <div>Erstellt für ein Referat / eine Schulpräsentation</div>
+        <div class="cite">Quellen in den Notizen.</div>
+      </div>
+
+      <div class="notes">
+        Wichtige Kurzquellen (Startpunkt für Recherche): White House Historical Association -- Biographie; Miller Center -- Lebenslauf/Analyse.  [oai_citation:0‡WHHA (en-US)](https://www.whitehousehistory.org/bios/donald-j-trump?utm_source=chatgpt.com) [oai_citation:1‡Miller Center](https://millercenter.org/president/trump/life-presidency?utm_source=chatgpt.com)
+      </div>
+    </section>
+
+    <!-- SLIDE 1: Frühes Leben & Business -->
+    <section class="slide" id="s1">
       <div>
-        <div id="editor" class="card">
-          <strong id="editorTitle">Neue Karte</strong>
-          <div style="margin-top:8px">
-            <label>Frage / Vorderseite</label>
-            <input id="front" placeholder="z. B. Was ist die Hauptstadt von X?" />
-            <label>Antwort / Rückseite</label>
-            <textarea id="back" placeholder="z. B. Hauptstadt ..."></textarea>
-            <label>Notiz (z. B. Formel, Beispiele)</label>
-            <textarea id="note" placeholder="optional"></textarea>
-            <label>Tags (Komma getrennt)</label>
-            <input id="tags" placeholder="z. B. Mathe, Vokabeln" />
-            <div style="margin-top:10px;display:flex;gap:8px">
-              <button id="saveBtn">Speichern</button>
-              <button id="newClear" class="ghost">Neu</button>
-            </div>
-          </div>
-        </div>
-
-        <div id="studyPanel" class="card center" style="margin-top:12px;display:none">
-          <div style="width:100%">
-            <div style="display:flex;justify-content:space-between;align-items:center">
-              <div>
-                <strong id="studyTitle">Lernmodus</strong>
-                <div class="muted small" id="studyMeta">--</div>
-              </div>
-              <div>
-                <button id="btnBack" class="ghost small">Zurück</button>
-              </div>
-            </div>
-
-            <div id="studyCard" class="card center" style="min-height:180px;margin-top:8px">
-              <div id="cardFront" class="big">--</div>
-              <div id="cardNote" class="muted" style="margin-top:8px"></div>
-            </div>
-
-            <div class="answerBtns">
-              <button id="showAnswer" class="small">Antwort zeigen</button>
-            </div>
-
-            <div id="answerArea" style="display:none;flex-direction:column;gap:8px">
-              <div class="card" id="theAnswer" style="text-align:center;font-size:18px"></div>
-              <div class="answerBtns">
-                <button id="btnCorrect" class="small" style="background:var(--good);border:none">✔ Korrekt</button>
-                <button id="btnWrong" class="small" style="background:var(--bad);border:none">❌ Falsch</button>
-              </div>
-            </div>
-
-            <div style="display:flex;justify-content:space-between;margin-top:8px">
-              <div class="muted small" id="progressInfo">--</div>
-              <div class="muted small" id="statsInfo">--</div>
-            </div>
-          </div>
-        </div>
-
-        <div id="quizPanel" class="card" style="margin-top:12px;display:none">
-          <strong>Quiz (Multiple Choice)</strong>
-          <div class="muted" style="font-size:13px">Wähle Anzahl Fragen und Zeitlimit pro Frage.</div>
-          <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
-            <label style="min-width:120px">Fragen:</label>
-            <input id="quizCount" type="number" value="10" min="1" style="width:80px"/>
-            <label style="min-width:120px">Zeit / Frage (Sek.):</label>
-            <input id="quizTime" type="number" value="20" min="5" style="width:80px"/>
-            <button id="startQuiz" class="small">Start</button>
-          </div>
-
-          <div id="quizArea" style="margin-top:12px;display:none">
-            <div id="quizCard" class="card center" style="min-height:140px">
-              <div id="quizQ" class="big">Frage</div>
-              <div id="quizTimer" class="muted" style="margin-top:6px">Zeit:</div>
-            </div>
-            <div id="quizChoices" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px"></div>
-            <div style="display:flex;justify-content:space-between;margin-top:8px">
-              <div class="muted" id="quizProgress">0 / 0</div>
-              <div class="muted" id="quizScore">Score: 0</div>
-            </div>
-          </div>
-        </div>
-
+        <div class="title">Frühes Leben & Geschäftskarriere</div>
+        <div class="subtitle">Familie, Immobilien und Marke</div>
       </div>
+
+      <div class="content">
+        <div class="col bullets">
+          <ul>
+            <li>Sohn von Fred und Mary Trump; aufgewachsen in Queens (Jamaica Estates).  [oai_citation:2‡Miller Center](https://millercenter.org/president/trump/life-presidency?utm_source=chatgpt.com)</li>
+            <li>Leitete die Trump Organization; bekannt für Immobilienprojekte, Hotels, Lizenzen und Marken.</li>
+            <li>Prominente Immobilien (z. B. Mar‑a‑Lago) und Ausbau der Medienpräsenz.</li>
+          </ul>
+        </div>
+
+        <div class="image">
+          <!-- 2025 portrait (Wikimedia) used to illustrate later career -->
+          <img src="https://commons.wikimedia.org/wiki/Special:FilePath/TrumpPortrait.jpg" alt="Donald Trump official portrait (2025)">
+        </div>
+      </div>
+
+      <div class="footer">
+        <div>Kontext: Business & öffentliche Persona</div>
+        <div class="cite">Miller Center / Trump Library.</div>
+      </div>
+
+      <div class="notes">
+        Für vertiefende Biografien siehe Miller Center (Life Before the Presidency) und die Trump Library.  [oai_citation:3‡Miller Center](https://millercenter.org/president/trump/life-presidency?utm_source=chatgpt.com) [oai_citation:4‡trumplibrary.gov](https://www.trumplibrary.gov/trumps/president-donald-j-trump?utm_source=chatgpt.com)
+      </div>
+    </section>
+
+    <!-- SLIDE 2: TV & Medien -->
+    <section class="slide" id="s2">
+      <div>
+        <div class="title">TV‑Karriere: <em>The Apprentice</em></div>
+        <div class="subtitle">Vom Unternehmer zum TV‑Star</div>
+      </div>
+
+      <div class="content">
+        <div class="image">
+          <!-- a public portrait to represent media era -->
+          <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Donald_Trump_official_portrait_%281%29.jpg" alt="Donald Trump portrait">
+        </div>
+
+        <div class="col bullets">
+          <ul>
+            <li>Ab 2004 Gastgeber und Produzent der Reality‑Show <em>The Apprentice</em>, die seine Bekanntheit massiv steigerte.  [oai_citation:5‡Wikipedia](https://en.wikipedia.org/wiki/The_Apprentice_%28American_TV_series%29?utm_source=chatgpt.com)</li>
+            <li>Die TV‑Präsenz half ihm, eine breite öffentliche Basis und Markenerkennung aufzubauen.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div>Medieneinfluss</div>
+        <div class="cite">The Apprentice -- Wikipedia / TV‑Archive</div>
+      </div>
+
+      <div class="notes">
+        The Apprentice lief ab 2004 und machte Trump als „TV‑Persönlichkeit" einem nationalen Publikum bekannt. Siehe TV‑Quellen für Details.  [oai_citation:6‡Wikipedia](https://en.wikipedia.org/wiki/The_Apprentice_%28American_TV_series%29?utm_source=chatgpt.com)
+      </div>
+    </section>
+
+    <!-- SLIDE 3: Präsidentschaft 2016–2021 -->
+    <section class="slide" id="s3">
+      <div>
+        <div class="title">Wahl 2016 & erste Amtszeit (2017–2021)</div>
+        <div class="subtitle">Wahl, Politik und Kontroversen</div>
+      </div>
+
+      <div class="content">
+        <div class="col bullets">
+          <ul>
+            <li>Gewann die Präsidentschaftswahl am 8. November 2016 gegen Hillary Clinton; Amtseinführung 20. Januar 2017.  [oai_citation:7‡Wikipedia](https://en.wikipedia.org/wiki/2016_United_States_presidential_election?utm_source=chatgpt.com) [oai_citation:8‡Wikimedia Commons](https://commons.wikimedia.org/wiki/File%3ADonald_Trump_official_portrait.jpg?utm_source=chatgpt.com)</li>
+            <li>Kernpunkte: Steuersenkungen (Tax Cuts), Handelspolitik (z. B. Konflikte mit China), Ernennungen zum Obersten Gerichtshof.</li>
+            <li>Die Amtszeit war stark polarisiert; Bewertungen hängen von politischen Perspektiven ab -- für wissenschaftliche Arbeiten mehrere Quellen prüfen.  [oai_citation:9‡Miller Center](https://millercenter.org/president/trump/life-presidency?utm_source=chatgpt.com)</li>
+          </ul>
+        </div>
+
+        <div class="image">
+          <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Donald_Trump_official_portrait.jpg" alt="Official portrait 2017">
+        </div>
+      </div>
+
+      <div class="footer">
+        <div>2017–2021: Innen‑ und Außenpolitik</div>
+        <div class="cite">Wahl‑ und Präsidialarchiv / Miller Center</div>
+      </div>
+
+      <div class="notes">
+        Statistiken und Gesetzestexte (z. B. Steuerreform 2017) am besten aus Primärquellen (Congressional records, FEC) prüfen.  [oai_citation:10‡FEC.gov](https://www.fec.gov/resources/cms-content/documents/federalelections2016.pdf?utm_source=chatgpt.com) [oai_citation:11‡Miller Center](https://millercenter.org/president/trump/life-presidency?utm_source=chatgpt.com)
+      </div>
+    </section>
+
+    <!-- SLIDE 4: Rückkehr & Porträt 2025 -->
+    <section class="slide" id="s4">
+      <div>
+        <div class="title">Rückkehr & offizielles Porträt (2025)</div>
+        <div class="subtitle">Symbolik & Rezeption</div>
+      </div>
+
+      <div class="content">
+        <div class="col bullets">
+          <ul>
+            <li>Im Januar 2025 wurde ein offizielles Porträt veröffentlicht -- ein Ereignis mit medialer Resonanz.  [oai_citation:12‡Wikimedia Commons](https://commons.wikimedia.org/wiki/File%3AOfficial_Presidential_Portrait_of_President_Donald_J._Trump_%282025%29.jpg?utm_source=chatgpt.com)</li>
+            <li>Solche offiziellen Porträts werden häufig kommentiert hinsichtlich Stil, Symbolik und Tradition.</li>
+          </ul>
+        </div>
+
+        <div class="image">
+          <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Official_Presidential_Portrait_of_President_Donald_J._Trump_%282025%29.jpg" alt="2025 official portrait">
+        </div>
+      </div>
+
+      <div class="footer">
+        <div>Porträt & öffentliche Reaktion</div>
+        <div class="cite">Wikimedia / White House releases</div>
+      </div>
+
+      <div class="notes">
+        Das 2025er Porträt (Fotograf: Daniel Torok) ist auf Wikimedia Commons dokumentiert; dort finden sich auch Bildunterschriften und Lizenzinfos.  [oai_citation:13‡Wikimedia Commons](https://commons.wikimedia.org/wiki/File%3AOfficial_Presidential_Portrait_of_President_Donald_J._Trump_%282025%29.jpg?utm_source=chatgpt.com)
+      </div>
+    </section>
+
+    <!-- SLIDE 5: Kontroversen & Hinweise zur Recherche -->
+    <section class="slide" id="s5">
+      <div>
+        <div class="title">Kontroversen & wissenschaftlicher Umgang</div>
+        <div class="subtitle">Wie man seriös über kontroverse Akteure arbeitet</div>
+      </div>
+
+      <div class="content">
+        <div class="col bullets">
+          <ul>
+            <li>Bei kontroversen Themen klar zwischen belegbaren Fakten (Dokumente, Gesetzestexte) und Bewertungen/Meinungen unterscheiden.</li>
+            <li>Nutze mehrere, unabhängige Quellen: Primärquellen, seriöse Forschungseinrichtungen (z. B. Miller Center), etablierte Nachschlagewerke (Britannica) und Medien mit Fakt‑Checks.</li>
+            <li>Für Zitate: immer Originalquelle angeben (Datum, Medium, Link).</li>
+          </ul>
+        </div>
+
+        <div class="image">
+          <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Donald_Trump_official_portrait_(6by8cropped).jpg" alt="Portrait crop">
+        </div>
+      </div>
+
+      <div class="footer">
+        <div>Quellenkritik ist zentral</div>
+        <div class="cite">Siehe Notizen für Startquellen</div>
+      </div>
+
+      <div class="notes">
+        Startquellen in dieser Präsentation: White House Historical Association; Miller Center; Wikimedia Commons; Wikipedia (für Überblicke, nicht als alleinige Primärquelle).  [oai_citation:14‡WHHA (en-US)](https://www.whitehousehistory.org/bios/donald-j-trump?utm_source=chatgpt.com) [oai_citation:15‡Miller Center](https://millercenter.org/president/trump/life-presidency?utm_source=chatgpt.com) [oai_citation:16‡Wikimedia Commons](https://commons.wikimedia.org/wiki/File%3ADonald_Trump_official_portrait.jpg?utm_source=chatgpt.com)
+      </div>
+    </section>
+
+    <!-- SLIDE 6: Quellen -->
+    <section class="slide" id="s6">
+      <div>
+        <div class="title">Quellen (Auswahl)</div>
+        <div class="subtitle">Weiterführende Links</div>
+      </div>
+
+      <div class="content">
+        <div class="col bullets">
+          <ol>
+            <li>White House Historical Association -- Kurzbiographie.  [oai_citation:17‡WHHA (en-US)](https://www.whitehousehistory.org/bios/donald-j-trump?utm_source=chatgpt.com)</li>
+            <li>Miller Center -- Lebenslauf & Präsidentschaftsanalyse.  [oai_citation:18‡Miller Center](https://millercenter.org/president/trump/life-presidency?utm_source=chatgpt.com)</li>
+            <li>Wikimedia Commons -- offizielle Porträts (2017, 2025).  [oai_citation:19‡Wikimedia Commons](https://commons.wikimedia.org/wiki/File%3ADonald_Trump_official_portrait.jpg?utm_source=chatgpt.com)</li>
+            <li>The Apprentice (TV) -- Medienkarriere.  [oai_citation:20‡Wikipedia](https://en.wikipedia.org/wiki/The_Apprentice_%28American_TV_series%29?utm_source=chatgpt.com)</li>
+            <li>2016 Wahl (Fakten & Ergebnisse): FEC / Wikipedia (Überblick).  [oai_citation:21‡FEC.gov](https://www.fec.gov/resources/cms-content/documents/federalelections2016.pdf?utm_source=chatgpt.com) [oai_citation:22‡Wikipedia](https://en.wikipedia.org/wiki/2016_United_States_presidential_election?utm_source=chatgpt.com)</li>
+          </ol>
+        </div>
+
+        <div class="image">
+          <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Donald_Trump_official_portrait.jpg" alt="Official portrait">
+        </div>
+      </div>
+
+      <div class="footer">
+        <div>Viel Erfolg bei deiner Präsentation!</div>
+        <div class="cite">Wenn du willst, exportiere ich die Slides als PDF/PowerPoint.</div>
+      </div>
+
+      <div class="notes">
+        Möchtest du: (A) Speaker‑Notes als Text, (B) Handout (PDF) mit Zitaten / Quellen oder (C) PPTX‑Export? Antworte kurz -- ich erstelle das sofort.
+      </div>
+    </section>
+
+    <!-- navigation -->
+    <div class="nav" role="navigation" aria-label="Slide navigation">
+      <button class="btn small" id="prev">← Zurück</button>
+      <button class="btn small" id="next">Weiter →</button>
     </div>
 
-    <footer>Die App speichert Karten lokal im Browser (localStorage). Nutze Export/Import für Backups.</footer>
-
-    <input id="fileInput" type="file" accept="application/json" style="display:none"/>
   </div>
 
 <script>
-/* Simple Study Helper - saves to localStorage
-   Data model: { id, front, back, note, tags[], box(1-5), nextReview, correct, wrong, created }
-*/
-const KEY = 'STUDY_HELPER_DATA_v1';
-const INTERVALS = [0,1,3,7,14];
-
-let cards = [];
-let currentEditId = null;
-
-// DOM
-const listEl = document.getElementById('list');
-const btnNew = document.getElementById('btnNew');
-const btnStudy = document.getElementById('btnStudy');
-const btnQuiz = document.getElementById('btnQuiz');
-const btnExport = document.getElementById('btnExport');
-const btnImport = document.getElementById('btnImport');
-const btnReset = document.getElementById('btnReset');
-const fileInput = document.getElementById('fileInput');
-
-const frontIn = document.getElementById('front');
-const backIn = document.getElementById('back');
-const noteIn = document.getElementById('note');
-const tagsIn = document.getElementById('tags');
-const saveBtn = document.getElementById('saveBtn');
-const newClear = document.getElementById('newClear');
-
-const searchIn = document.getElementById('search');
-const tagFilter = document.getElementById('tagFilter');
-const onlyDue = document.getElementById('onlyDue');
-
-const editor = document.getElementById('editor');
-const studyPanel = document.getElementById('studyPanel');
-const studyCard = document.getElementById('studyCard');
-const cardFront = document.getElementById('cardFront');
-const cardNote = document.getElementById('cardNote');
-const showAnswer = document.getElementById('showAnswer');
-const answerArea = document.getElementById('answerArea');
-const theAnswer = document.getElementById('theAnswer');
-const btnCorrect = document.getElementById('btnCorrect');
-const btnWrong = document.getElementById('btnWrong');
-const btnBack = document.getElementById('btnBack');
-const studyTitle = document.getElementById('studyTitle');
-const progressInfo = document.getElementById('progressInfo');
-const statsInfo = document.getElementById('statsInfo');
-
-const quizPanel = document.getElementById('quizPanel');
-const quizCount = document.getElementById('quizCount');
-const quizTime = document.getElementById('quizTime');
-const startQuiz = document.getElementById('startQuiz');
-const quizArea = document.getElementById('quizArea');
-const quizQ = document.getElementById('quizQ');
-const quizChoices = document.getElementById('quizChoices');
-const quizTimer = document.getElementById('quizTimer');
-const quizProgress = document.getElementById('quizProgress');
-const quizScore = document.getElementById('quizScore');
-
-// load/save
-function load(){
-  try{ const raw = localStorage.getItem(KEY); cards = raw ? JSON.parse(raw) : []; }
-  catch(e){ cards = []; }
-}
-function save(){ localStorage.setItem(KEY, JSON.stringify(cards)); }
-
-// helpers
-function uid(){ return Math.random().toString(36).slice(2,9); }
-function todayISO(){ const d=new Date(); d.setHours(0,0,0,0); return d.toISOString(); }
-function daysFromNow(n){ const d=new Date(); d.setDate(d.getDate()+n); d.setHours(0,0,0,0); return d.toISOString(); }
-function isDue(c){ return !c.nextReview || new Date(c.nextReview) <= new Date(); }
-function parseTags(s){ return (s||'').split(',').map(x=>x.trim()).filter(Boolean); }
-function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=> ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-
-// UI
-function ensureSample(){
-  if(cards.length===0){
-    cards.push({id:uid(),front:'Haus',back:'house',note:'das Haus',tags:['Vokabel'],box:1,nextReview:todayISO(),correct:0,wrong:0,created:new Date().toISOString()});
-    save();
+  // Slide navigation + basic accessibility
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  let cur = 0;
+  function show(i){
+    slides.forEach(s=>s.classList.remove('active'));
+    cur = (i + slides.length) % slides.length;
+    slides[cur].classList.add('active');
+    // update URL hash
+    history.replaceState(null, '', '#slide-' + cur);
   }
-}
-function renderList(){
-  listEl.innerHTML='';
-  const q = (searchIn.value||'').toLowerCase();
-  const tag = tagFilter.value;
-  const only = onlyDue.checked;
-  const filtered = cards.filter(c=>{
-    if(q && !(c.front||'').toLowerCase().includes(q) && !(c.back||'').toLowerCase().includes(q) && !(c.note||'').toLowerCase().includes(q)) return false;
-    if(tag && !(c.tags||[]).includes(tag)) return false;
-    if(only && !isDue(c)) return false;
-    return true;
-  }).sort((a,b)=> new Date(a.nextReview||0)-new Date(b.nextReview||0));
-  if(filtered.length===0){ listEl.innerHTML='<div class="muted">Keine Karten.</div>'; return; }
-  for(const c of filtered){
-    const div = document.createElement('div'); div.className='item';
-    const left = document.createElement('div');
-    left.innerHTML = `<strong>${escapeHtml(c.front)}</strong><div class="muted">${escapeHtml(c.back)}</div><div class="muted" style="margin-top:6px">Box ${c.box} • Tags: ${(c.tags||[]).join(', ')} • Nächste: ${c.nextReview? new Date(c.nextReview).toLocaleDateString() : 'sofort'}</div>`;
-    const right = document.createElement('div'); right.style.display='flex'; right.style.gap='6px';
-    const btnLearn = document.createElement('button'); btnLearn.textContent='▶'; btnLearn.title='Lernen (diese)'; btnLearn.onclick = ()=> startStudy([c]);
-    const btnEdit = document.createElement('button'); btnEdit.textContent='✏️'; btnEdit.onclick = ()=> editCard(c.id);
-    const btnDel = document.createElement('button'); btnDel.textContent='🗑️'; btnDel.onclick = ()=> { if(confirm('Löschen?')){ cards = cards.filter(x=>x.id!==c.id); save(); render(); } };
-    right.appendChild(btnLearn); right.appendChild(btnEdit); right.appendChild(btnDel);
-    div.appendChild(left); div.appendChild(right);
-    listEl.appendChild(div);
-  }
-  populateTagFilter();
-}
-function populateTagFilter(){
-  const s = new Set(); cards.forEach(c=> (c.tags||[]).forEach(t=>s.add(t)));
-  tagFilter.innerHTML = '<option value="">Alle Tags</option>';
-  Array.from(s).sort().forEach(t=>{ const o = document.createElement('option'); o.value=t; o.textContent=t; tagFilter.appendChild(o); });
-}
-
-// Editor
-btnNew.addEventListener('click', ()=>{ currentEditId=null; document.getElementById('editorTitle').textContent='Neue Karte'; frontIn.value=''; backIn.value=''; noteIn.value=''; tagsIn.value=''; frontIn.focus(); });
-
-saveBtn.addEventListener('click', ()=>{
-  const f = frontIn.value.trim(); const b = backIn.value.trim();
-  if(!f || !b) { alert('Frage und Antwort ausfüllen.'); return; }
-  const t = parseTags(tagsIn.value);
-  if(currentEditId){
-    const it = cards.find(x=>x.id===currentEditId);
-    if(!it) return;
-    it.front=f; it.back=b; it.note=noteIn.value.trim(); it.tags=t;
-  } else {
-    cards.push({ id:uid(), front:f, back:b, note:noteIn.value.trim(), tags:t, box:1, nextReview:todayISO(), correct:0, wrong:0, created:new Date().toISOString() });
-  }
-  save(); renderList();
-  currentEditId=null; document.getElementById('editorTitle').textContent='Neue Karte'; frontIn.value=''; backIn.value=''; noteIn.value=''; tagsIn.value='';
-});
-newClear.addEventListener('click', ()=>{ currentEditId=null; document.getElementById('editorTitle').textContent='Neue Karte'; frontIn.value=''; backIn.value=''; noteIn.value=''; tagsIn.value=''; });
-
-function editCard(id){
-  const c = cards.find(x=>x.id===id); if(!c) return;
-  currentEditId = id; document.getElementById('editorTitle').textContent='Karte bearbeiten';
-  frontIn.value = c.front; backIn.value = c.back; noteIn.value = c.note || ''; tagsIn.value = (c.tags||[]).join(', ');
-}
-
-// Study (Leitner simple)
-let studyQueue = []; let studyIndex = 0; let currentCard = null;
-btnStudy.addEventListener('click', ()=> startStudy());
-function startStudy(specific){
-  let pool = cards.slice().sort((a,b)=> isDue(a)? -1 : 1);
-  if(specific && specific.length) pool = specific.slice();
-  if(pool.length===0){ alert('Keine Karten vorhanden.'); return; }
-  studyQueue = pool;
-  studyIndex = 0;
-  document.getElementById('editor').style.display='none';
-  studyPanel.style.display='block';
-  nextStudyCard();
-}
-function nextStudyCard(){
-  if(studyIndex >= studyQueue.length){ // finished
-    cardFront.textContent = 'Fertig 🎉'; cardNote.textContent='Gut gemacht!'; answerArea.style.display='none'; showAnswer.style.display='none'; progressInfo.textContent = `0 / ${studyQueue.length}`; return;
-  }
-  currentCard = studyQueue[studyIndex];
-  cardFront.textContent = currentCard.front; cardNote.textContent = currentCard.note || ''; theAnswer.textContent=''; answerArea.style.display='none'; showAnswer.style.display='inline-block';
-  progressInfo.textContent = `${studyIndex+1} / ${studyQueue.length}`;
-  statsInfo.textContent = `Korrekt: ${currentCard.correct||0} • Falsch: ${currentCard.wrong||0} • Box: ${currentCard.box||1}`;
-}
-showAnswer.addEventListener('click', ()=>{ theAnswer.textContent = currentCard.back; answerArea.style.display='flex'; showAnswer.style.display='none'; });
-btnCorrect.addEventListener('click', ()=> markStudy(true));
-btnWrong.addEventListener('click', ()=> markStudy(false));
-btnBack.addEventListener('click', ()=> { studyPanel.style.display='none'; document.getElementById('editor').style.display='block'; });
-
-function markStudy(correct){
-  if(!currentCard) return;
-  if(correct){ currentCard.correct = (currentCard.correct||0) + 1; currentCard.box = Math.min(5, (currentCard.box||1) + 1); }
-  else { currentCard.wrong = (currentCard.wrong||0) + 1; currentCard.box = Math.max(1, (currentCard.box||1) - 1); }
-  const days = INTERVALS[Math.max(0,Math.min(4,(currentCard.box||1)-1))] || 0;
-  currentCard.nextReview = daysFromNow(days);
-  save();
-  studyIndex++; nextStudyCard();
-}
-
-// Quiz (multiple choice)
-btnQuiz.addEventListener('click', ()=>{ quizPanel.style.display = quizPanel.style.display==='none' ? 'block' : 'none'; });
-startQuiz.addEventListener('click', ()=> runQuiz());
-
-let quizState = null; let quizTimerInterval = null;
-
-function runQuiz(){
-  const count = Math.max(1, Math.min(100, parseInt(quizCount.value||10)));
-  const timePer = Math.max(5, parseInt(quizTime.value||20));
-  if(cards.length < 2){ alert('Mindestens 2 Karten erforderlich für Quiz.'); return; }
-  // pick random unique questions
-  const pool = shuffle(cards.slice());
-  const questions = pool.slice(0, Math.min(count, pool.length));
-  quizState = { q: questions, idx:0, score:0, timePer, total:questions.length };
-  document.getElementById('editor').style.display='none';
-  quizArea.style.display='block';
-  setupQuizQuestion();
-}
-
-function setupQuizQuestion(){
-  const s = quizState;
-  if(!s || s.idx >= s.total){ finishQuiz(); return; }
-  const card = s.q[s.idx];
-  quizQ.textContent = card.front;
-  // choices: correct back + 3 random backs
-  const others = cards.filter(c=>c.id !== card.id);
-  const choices = [card.back];
-  shuffle(others);
-  for(let i=0;i<3 && i<others.length;i++) choices.push(others[i].back);
-  shuffle(choices);
-  quizChoices.innerHTML = '';
-  choices.forEach(ch=>{
-    const b = document.createElement('button'); b.className='small'; b.style.textAlign='left'; b.textContent = ch;
-    b.onclick = ()=> { if(ch === card.back){ s.score++; quizScore.textContent = 'Score: ' + s.score; } nextQuizQuestion(); };
-    quizChoices.appendChild(b);
+  document.getElementById('next').addEventListener('click', ()=> show(cur+1));
+  document.getElementById('prev').addEventListener('click', ()=> show(cur-1));
+  window.addEventListener('keydown', e=>{
+    if(e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') show(cur+1);
+    else if(e.key === 'ArrowLeft') show(cur-1);
   });
-  quizProgress.textContent = `${s.idx+1} / ${s.total}`;
-  quizTimer.textContent = `Zeit: ${s.timePer}s`;
-  // timer
-  let remaining = s.timePer;
-  clearInterval(quizTimerInterval);
-  quizTimerInterval = setInterval(()=> { remaining--; quizTimer.textContent = `Zeit: ${remaining}s`; if(remaining<=0){ clearInterval(quizTimerInterval); nextQuizQuestion(); } }, 1000);
-}
-
-function nextQuizQuestion(){
-  clearInterval(quizTimerInterval);
-  quizState.idx++; setupQuizQuestion();
-}
-
-function finishQuiz(){
-  clearInterval(quizTimerInterval);
-  alert('Quiz beendet. Score: ' + (quizState.score||0) + ' / ' + quizState.total);
-  quizState = null;
-  quizArea.style.display='none';
-  document.getElementById('editor').style.display='block';
-}
-
-// Import/Export
-btnExport.addEventListener('click', ()=>{
-  const data = { exportedAt: new Date().toISOString(), cards };
-  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = 'study_backup_' + new Date().toISOString().slice(0,10) + '.json'; a.click(); URL.revokeObjectURL(url);
-});
-btnImport.addEventListener('click', ()=> fileInput.click());
-fileInput.addEventListener('change', async (e) => {
-  const f = e.target.files[0]; if(!f) return;
-  try {
-    const txt = await f.text();
-    const parsed = JSON.parse(txt);
-    if(parsed && Array.isArray(parsed.cards || parsed.cards === undefined ? parsed.cards : parsed.cards )){
-      const list = parsed.cards || parsed.cards; // fallback
-      if(!Array.isArray(list) && parsed.cards && Array.isArray(parsed.cards)) list = parsed.cards;
-      if(!Array.isArray(list)) {
-        // try older format: parsed.cards may be undefined, try parsed directly
-        if(Array.isArray(parsed)) list = parsed;
-      }
-      if(!list || !Array.isArray(list)){ alert('Ungültiges Format.'); fileInput.value=''; return; }
-      if(confirm('Anhängen (OK) oder Überschreiben (Abbrechen)?')) {
-        // append avoiding id collisions
-        const existing = new Set(cards.map(c=>c.id));
-        for(const it of list){
-          if(!it.id) it.id = uid();
-          if(existing.has(it.id)) it.id = uid();
-          cards.push(it);
-        }
-      } else {
-        cards = list.map(it => it.id ? it : {...it, id: uid()});
-      }
-      save(); renderList(); alert('Import erfolgreich.');
-    } else {
-      alert('Unbekanntes Format.');
-    }
-  } catch(err){ alert('Import Fehler: ' + err.message); } finally { fileInput.value=''; }
-});
-
-// Reset
-btnReset.addEventListener('click', ()=> { if(confirm('Alle Karten löschen?')){ cards=[]; save(); renderList(); } });
-
-// util
-function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]] } return a; }
-
-// init
-load(); ensureSample(); renderList();
-
-searchIn.addEventListener('input', renderList);
-tagFilter.addEventListener('change', renderList);
-onlyDue.addEventListener('change', renderList);
-
+  // restore from hash if present
+  const m = location.hash.match(/slide-(\d+)/);
+  if(m) cur = Math.max(0, Math.min(slides.length-1, parseInt(m[1],10)));
+  show(cur);
 </script>
 </body>
 </html>
