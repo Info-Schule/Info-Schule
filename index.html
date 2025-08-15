@@ -3,218 +3,155 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GGLernen</title>
+<title>GGLernen Vokabeltrainer</title>
 <style>
 body {
-  margin:0;
-  font-family:'Arial', sans-serif;
+  font-family: 'Arial', sans-serif;
   background: linear-gradient(135deg,#74b9ff,#a29bfe);
   display:flex;
-  justify-content:center;
-  align-items:center;
   flex-direction:column;
+  align-items:center;
   min-height:100vh;
-  overflow:hidden;
-  animation: bgMove 20s linear infinite;
+  margin:0;
+  padding:20px;
 }
-@keyframes bgMove {
-  0%{background-position:0% 50%}
-  50%{background-position:100% 50%}
-  100%{background-position:0% 50%}
+#logo {
+  font-size:48px;
+  font-weight:bold;
+  color:#fff;
+  margin-bottom:20px;
+  text-shadow:2px 2px 6px rgba(0,0,0,0.3);
 }
-
-.screen { 
-  display:none; 
-  flex-direction:column; 
-  align-items:center; 
-  justify-content:center; 
-  width:100%; 
-  height:100vh; 
-  transition:opacity 0.8s ease-in-out; 
-  padding:20px; 
-  box-sizing:border-box; 
-  overflow-y:auto; 
+#menu {
+  display:flex;
+  gap:15px;
+  margin-bottom:20px;
 }
-.active { display:flex; opacity:1; }
-
-h1,h2,h3 { 
-  color:#fff; 
-  text-align:center; 
-  margin:10px; 
-  text-shadow:2px 2px 4px rgba(0,0,0,0.3); 
-  animation: fadeIn 1s ease forwards;
+button.folderBtn {
+  padding:10px 20px;
+  border:none;
+  border-radius:12px;
+  background:#6c5ce7;
+  color:white;
+  cursor:pointer;
+  transition:0.3s;
 }
-@keyframes fadeIn {
-  from{opacity:0; transform:translateY(-20px);}
-  to{opacity:1; transform:translateY(0);}
+button.folderBtn:hover {background:#a29bfe;}
+#trainer {
+  background:rgba(255,255,255,0.1);
+  padding:20px;
+  border-radius:20px;
+  width:90%;
+  max-width:500px;
+  text-align:center;
 }
-
-button { 
-  padding:12px 28px; 
-  margin:10px; 
-  border:none; 
-  border-radius:15px; 
-  cursor:pointer; 
-  transition: transform 0.3s, background 0.3s, box-shadow 0.3s; 
-  font-weight:bold; 
-  color:white; 
-  font-size:16px; 
-  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+.card {
+  background:#fff;
+  border-radius:15px;
+  padding:20px;
+  margin:20px 0;
+  font-size:24px;
+  cursor:pointer;
+  transition: transform 0.6s;
+  perspective:1000px;
+  min-height:80px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 4px 10px rgba(0,0,0,0.2);
 }
-button:hover { 
-  transform:scale(1.1) rotate(-2deg); 
-  filter:brightness(1.2); 
-  box-shadow: 0 8px 12px rgba(0,0,0,0.3);
-}
-
-#menuScreen button { background:#6c5ce7; }
-#classScreen button { background:#00b894; }
-#subjectScreen button { background:#fd79a8; }
-#topicScreen button { background:#e17055; }
-#taskScreen button { background:#00cec9; }
-
-#progressBar { 
-  width:80%; 
-  height:25px; 
-  background:rgba(255,255,255,0.3); 
-  border-radius:12px; 
-  margin:20px 0; 
-  overflow:hidden; 
-}
-#progressFill { 
-  height:100%; 
-  width:0%; 
-  background:#ffeaa7; 
-  border-radius:12px; 
-  transition: width 0.7s ease; 
-}
-
-#logo { 
-  font-size:48px; 
-  font-weight:bold; 
-  color:#fff; 
-  text-shadow:2px 2px 6px rgba(0,0,0,0.4); 
-  margin:20px; 
-  animation: pulse 2s infinite; 
-}
-@keyframes pulse {
-  0%{transform:scale(1);}
-  50%{transform:scale(1.05);}
-  100%{transform:scale(1);}
-}
-
-#credits { 
-  font-size:14px; 
-  color:#fff; 
-  margin-top:10px;
-  text-shadow:1px 1px 2px rgba(0,0,0,0.4);
-}
-
-#taskArea h3 {
-  animation: flipIn 0.6s ease forwards;
-  backface-visibility: hidden;
-}
-@keyframes flipIn {
-  from{transform:rotateY(90deg); opacity:0;}
-  to{transform:rotateY(0deg); opacity:1;}
-}
+.card.flipped {transform:rotateY(180deg);}
+#progressBar {width:100%; height:20px; background:rgba(255,255,255,0.3); border-radius:10px; overflow:hidden;}
+#progressFill {width:0%; height:100%; background:#ffeaa7; border-radius:10px; transition:width 0.5s;}
+#score {font-size:20px; color:#fff; text-shadow:1px 1px 2px rgba(0,0,0,0.4);}
 </style>
 </head>
 <body>
 
-<div id="logo">GGLernen</div>
-<div id="credits">von Peter Beulker</div>
+<div id="logo">GGLernen Vokabeltrainer</div>
 
-<div id="menuScreen" class="screen active">
-  <h1>Willkommen bei GGLernen!</h1>
-  <button onclick="showScreen('classScreen')">Start</button>
+<div id="menu">
+  <button class="folderBtn" onclick="chooseFolder('alltag')">Französisch Alltag</button>
+  <button class="folderBtn" onclick="chooseFolder('schule')">Französisch Schule</button>
+  <button class="folderBtn" onclick="chooseFolder('mathe')">Mathe Begriffe</button>
 </div>
 
-<div id="classScreen" class="screen">
-  <h2>Wähle deine Klasse</h2>
-  <div id="classButtons"></div>
-  <button onclick="showScreen('menuScreen')">Zurück</button>
-</div>
-
-<div id="subjectScreen" class="screen">
-  <h2>Wähle dein Fach</h2>
-  <div id="subjectButtons"></div>
-  <button onclick="showScreen('classScreen')">Zurück</button>
-</div>
-
-<div id="topicScreen" class="screen">
-  <h2>Wähle ein Themengebiet</h2>
-  <div id="topicButtons"></div>
-  <button onclick="showScreen('subjectScreen')">Zurück</button>
-</div>
-
-<div id="taskScreen" class="screen">
-  <h2 id="taskTitle">Aufgaben</h2>
-  <div id="taskArea"></div>
+<div id="trainer">
+  <div id="score">Score: 0</div>
+  <div class="card" id="card">Klicke zum Drehen</div>
+  <button onclick="checkAnswer(true)">Richtig</button>
+  <button onclick="checkAnswer(false)">Falsch</button>
   <div id="progressBar"><div id="progressFill"></div></div>
-  <button onclick="nextTask()">Nächste Aufgabe</button>
-  <button onclick="showScreen('topicScreen')">Zurück</button>
+  <input type="file" id="photoInput" accept="image/*" />
 </div>
 
 <script>
-// Klassen und Fächer
-const classes = ["5","6","7","8","9","10","11","12","13"];
-const subjects = ["Mathe","Deutsch","Französisch"];
-const tasks = {
-  "Mathe":{"5":{"Addition & Subtraktion":["345+678","900-456","123+789","567-234","345+123"],"Multiplikation":["12*8","15*7","9*13","11*6","14*5"]}},
-  "Deutsch":{"5":{"Grammatik":["Bilde Satz mit 'weil'","Subjekt: 'Der Hund läuft.'","Prädikat: 'Die Katze schläft'","Pronomen: '___ geht nach Hause'","Finde Adjektiv: 'Der große Baum'"],"Rechtschreibung":["Schreibe: 'Fahrrad, Schokolade, Apfel'","Schreibe: 'Freund, Buch, Lehrer'","Setze Buchstaben ein: 'Sch__ler'","Satz korrekt: 'ich gehe zur schule.'","Korrigiere Satz: 'der hund isst.'"]}},
-  "Französisch":{"5":{"Vokabeltrainer":["Haus -> ?","Baum -> ?","Katze -> ?","Hund -> ?","Schule -> ?"],"Lernkarten":["Konjugation 'être'","Konjugation 'avoir'","Satz mit 'aller'","Satz mit 'faire'","Satz mit 'venir'"]}}
+let vocabFolders = {
+  alltag: [
+    {fr:"maison", de:"Haus"},
+    {fr:"chien", de:"Hund"},
+    {fr:"chat", de:"Katze"}
+  ],
+  schule: [
+    {fr:"stylo", de:"Stift"},
+    {fr:"livre", de:"Buch"},
+    {fr:"bureau", de:"Schreibtisch"}
+  ],
+  mathe: [
+    {fr:"addition", de:"Addition"},
+    {fr:"soustraction", de:"Subtraktion"},
+    {fr:"multiplication", de:"Multiplikation"}
+  ]
 };
 
-let currentClass=null,currentSubject=null,currentTopic=null,currentTaskIndex=0;
+let currentVocab = [];
+let currentIndex = 0;
+let score = 0;
 
-function showScreen(screenId){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById(screenId).classList.add('active');
+function chooseFolder(folder) {
+  currentVocab = [...vocabFolders[folder]];
+  currentIndex = 0;
+  score = 0;
+  updateScore();
+  showCard();
+  updateProgress();
 }
 
-function createButtons(containerId, items, callback){
-  const container=document.getElementById(containerId);
-  container.innerHTML="";
-  items.forEach(i=>{
-    const btn=document.createElement('button');
-    btn.innerText=i;
-    btn.onclick=()=>callback(i);
-    container.appendChild(btn);
-  });
+function showCard() {
+  const card = document.getElementById('card');
+  card.innerText = currentVocab[currentIndex].fr;
+  card.classList.remove('flipped');
 }
 
-// Klasse auswählen
-createButtons("classButtons", classes, cls=>{
-  currentClass=cls;
-  createButtons("subjectButtons", subjects, subj=>{
-    currentSubject=subj;
-    const topicList=Object.keys(tasks[subj][cls]||{});
-    createButtons("topicButtons", topicList, t=>{
-      currentTopic=t;
-      currentTaskIndex=0;
-      showTask();
-      showScreen('taskScreen');
-    });
-    showScreen('subjectScreen');
-  });
-  showScreen('classScreen');
+document.getElementById('card').addEventListener('click',()=>{
+  const card = document.getElementById('card');
+  card.innerText = currentVocab[currentIndex].de;
+  card.classList.add('flipped');
 });
 
-function showTask(){
-  const taskArray=tasks[currentSubject][currentClass][currentTopic];
-  if(!taskArray) return;
-  const taskArea=document.getElementById('taskArea');
-  taskArea.innerHTML=`<h3>${taskArray[currentTaskIndex]}</h3>`;
-  const progress=((currentTaskIndex+1)/taskArray.length)*100;
-  document.getElementById('progressFill').style.width=progress+'%';
+function checkAnswer(correct){
+  if(correct){score++;}
+  currentIndex++;
+  if(currentIndex>=currentVocab.length){alert("Fertig! Score: "+score); currentIndex=0;}
+  updateScore();
+  showCard();
+  updateProgress();
 }
 
-function nextTask(){
-  const taskArray=tasks[currentSubject][currentClass][currentTopic];
-  if(currentTaskIndex<taskArray.length-1){currentTaskIndex++;showTask();}
-  else alert("Alle Aufgaben erledigt!");
+function updateScore(){document.getElementById('score').innerText="Score: "+score;}
+function updateProgress(){
+  const fill = document.getElementById('progressFill');
+  fill.style.width=((currentIndex/currentVocab.length)*100)+'%';
 }
+
+// Foto Upload Funktion
+document.getElementById('photoInput').addEventListener('change',(e)=>{
+  const file = e.target.files[0];
+  if(file){
+    alert("Foto hochgeladen! (Hier könntest du OCR einbinden)");
+  }
+});
 </script>
+
 </body>
 </html>
