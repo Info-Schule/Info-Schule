@@ -58,7 +58,7 @@ button:hover{background:#a29bfe;transform:scale(1.05);}
   cursor:pointer;transition:0.6s;transform-style:preserve-3d;position:relative;
   box-shadow:0 10px 30px rgba(0,0,0,0.3);
 }
-.card.flipped{transform:rotateY(180deg);}
+.card.flipped{transform:rotateY(180deg) scale(1.05);}
 .card .front,.card .back{
   position:absolute;width:100%;height:100%;
   backface-visibility:hidden;
@@ -69,11 +69,22 @@ button:hover{background:#a29bfe;transform:scale(1.05);}
 .progress, .level, .streak{margin-top:10px;font-size:0.9em;color:#fff;text-shadow:1px 1px 3px rgba(0,0,0,0.3);}
 .vocab-item{transition:0.3s;}
 .vocab-item:hover{transform:scale(1.02);}
+.tutorial{background:rgba(255,255,255,0.2);padding:15px;margin:10px;border-radius:15px;text-align:center;}
+.delete-btn{background:#e17055;margin-left:5px;}
 </style>
 </head>
 <body>
 
 <h1>GGLernen Vokabeltrainer</h1>
+
+<section id="tutorialSection">
+  <div class="tutorial">
+    <h2>Willkommen zu GGLernen!</h2>
+    <p>Hier kannst du eigene Vokabelordner erstellen, deine Fremdsprache lernen und deinen Fortschritt verfolgen.<br>
+    Klicke auf "Ordner erstellen", um zu starten. Deine Streak wird automatisch gezählt, wenn du an verschiedenen Tagen lernst.</p>
+    <button onclick="closeTutorial()">Alles klar!</button>
+  </div>
+</section>
 
 <section>
   <h2>Konto</h2>
@@ -98,7 +109,7 @@ button:hover{background:#a29bfe;transform:scale(1.05);}
     </div>
   </div>
   <div>
-    <input type="text" id="frontInput" placeholder="Französisch">
+    <input type="text" id="frontInput" placeholder="Fremdsprache">
     <input type="text" id="backInput" placeholder="Deutsch">
     <button onclick="addVocab()">Hinzufügen</button>
   </div>
@@ -113,17 +124,40 @@ button:hover{background:#a29bfe;transform:scale(1.05);}
 </section>
 
 <script>
+// --- Tutorial ---
+if(!localStorage.getItem('tutorialShown')){
+  document.getElementById('tutorialSection').style.display='block';
+} else {
+  document.getElementById('tutorialSection').style.display='none';
+}
+function closeTutorial(){
+  localStorage.setItem('tutorialShown','true');
+  document.getElementById('tutorialSection').style.display='none';
+}
+
 // --- Account ---
 let username = localStorage.getItem('username') || '';
 document.getElementById('usernameInput').value=username;
-let streak = JSON.parse(localStorage.getItem('streak')) || 0;
+let lastLogin = localStorage.getItem('lastLogin');
+let streakDays = JSON.parse(localStorage.getItem('streakDays')) || [];
 
 function saveUsername(){
   username=document.getElementById('usernameInput').value.trim();
   localStorage.setItem('username',username);
   updateAccountInfo();
 }
+
+function updateStreak(){
+  let today = new Date().toISOString().slice(0,10);
+  if(!streakDays.includes(today)){
+    streakDays.push(today);
+    localStorage.setItem('streakDays',JSON.stringify(streakDays));
+  }
+}
+
 function updateAccountInfo(){
+  updateStreak();
+  let streak=streakDays.length;
   document.getElementById('accountInfo').innerHTML=`<strong>Name:</strong> ${username}<br><strong>Streak:</strong> ${streak} Tage`;
 }
 
@@ -139,10 +173,18 @@ function renderFolders(){
   const list = document.getElementById('folderList');
   list.innerHTML='';
   for(let name in folders){
-    let btn=document.createElement('button');
-    btn.innerText=name;
-    btn.onclick=()=>openFolder(name);
-    list.appendChild(btn);
+    let div=document.createElement('div');
+    div.innerText=name;
+    let openBtn=document.createElement('button');
+    openBtn.innerText='Öffnen';
+    openBtn.onclick=()=>openFolder(name);
+    let delBtn=document.createElement('button');
+    delBtn.innerText='Löschen';
+    delBtn.className='delete-btn';
+    delBtn.onclick=()=>{deleteFolder(name)};
+    div.appendChild(openBtn);
+    div.appendChild(delBtn);
+    list.appendChild(div);
   }
 }
 function createFolder(){
@@ -152,6 +194,17 @@ function createFolder(){
     saveFolders();
     renderFolders();
     document.getElementById('newFolderName').value='';
+  }
+}
+
+function deleteFolder(name){
+  if(confirm(`Ordner "${name}" wirklich löschen?`)){
+    delete folders[name];
+    saveFolders();
+    renderFolders();
+    if(currentFolder===name){
+      document.getElementById('trainerSection').style.display='none';
+    }
   }
 }
 
@@ -173,85 +226,4 @@ function showCard(){
     document.getElementById('cardFront').innerText='Keine Vokabeln';
     document.getElementById('cardBack').innerText='';
     return;
-  }
-  document.getElementById('cardFront').innerText=vocabList[currentIndex].front;
-  document.getElementById('cardBack').innerText=vocabList[currentIndex].back;
-  flipped=false;
-  document.getElementById('card').classList.remove('flipped');
-}
-
-function flipCard(){
-  if(vocabList.length==0) return;
-  flipped=!flipped;
-  document.getElementById('card').classList.toggle('flipped');
-}
-
-function addVocab(){
-  const front=document.getElementById('frontInput').value.trim();
-  const back=document.getElementById('backInput').value.trim();
-  if(front && back){
-    vocabList.push({front,back,right:0,wrong:0});
-    folders[currentFolder]=vocabList;
-    saveFolders();
-    document.getElementById('frontInput').value='';
-    document.getElementById('backInput').value='';
-    showCard();
-    renderVocabList();
-    updateProgress();
-  }
-}
-
-function answer(isRight){
-  if(vocabList.length==0) return;
-  if(isRight) vocabList[currentIndex].right++;
-  else vocabList[currentIndex].wrong++;
-  folders[currentFolder]=vocabList;
-  saveFolders();
-  nextCard();
-  renderVocabList();
-  updateProgress();
-  streak++; // Einfache Streak Logik
-  localStorage.setItem('streak',JSON.stringify(streak));
-  updateAccountInfo();
-}
-
-function nextCard(){
-  currentIndex++;
-  if(currentIndex>=vocabList.length) currentIndex=0;
-  showCard();
-}
-
-function renderVocabList(){
-  const container=document.getElementById('vocabList');
-  container.innerHTML='';
-  vocabList.forEach(v=>{
-    const div=document.createElement('div');
-    div.className='vocab-item';
-    let percent=Math.round((v.right/(v.right+v.wrong||1))*100);
-    div.innerHTML=`${v.front} - ${v.back} | Erfolg: ${percent}% | Fehler: ${v.wrong}`;
-    container.appendChild(div);
-  });
-}
-
-function updateProgress(){
-  if(vocabList.length==0){
-    document.getElementById('progress').innerText='Fortschritt: 0%';
-    document.getElementById('levelDisplay').innerText='';
-    document.getElementById('streakDisplay').innerText='';
-    return;
-  }
-  let total=vocabList.length;
-  let mastered=vocabList.filter(v=>v.right>v.wrong).length;
-  let percent=Math.round((mastered/total)*100);
-  document.getElementById('progress').innerText=`Fortschritt: ${percent}%`;
-  document.getElementById('levelDisplay').innerText=`Level: ${Math.floor(percent/10)+1}`;
-  document.getElementById('streakDisplay').innerText=`Streak: ${streak} Tage`;
-}
-
-// --- Initial ---
-renderFolders();
-updateAccountInfo();
-</script>
-
-</body>
-</html>
+ 
